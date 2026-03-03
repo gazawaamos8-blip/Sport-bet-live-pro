@@ -1,72 +1,70 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Match } from '../types';
-import { Activity, Calendar } from 'lucide-react';
-import { getFlag } from '../services/sportApiService';
+import { sportApiService } from '../services/sportApiService';
+import { motion } from 'framer-motion';
 
 interface ScoreTickerProps {
-  matches: Match[];
+  matches?: Match[];
 }
 
-const ScoreTicker: React.FC<ScoreTickerProps> = ({ matches }) => {
-  // Prioritize Live matches, then Upcoming
-  const liveMatches = matches.filter(m => m.status === 'live');
-  const upcomingMatches = matches.filter(m => m.status === 'upcoming').slice(0, 5);
-  const displayMatches = liveMatches.length > 0 ? [...liveMatches, ...upcomingMatches] : matches.slice(0, 10);
+const ScoreTicker: React.FC<ScoreTickerProps> = ({ matches: propMatches }) => {
+  const [internalMatches, setInternalMatches] = useState<Match[]>([]);
 
-  if (displayMatches.length === 0) return null;
+  useEffect(() => {
+    if (propMatches) return; // Use props if provided
 
-  // Duplicate the list multiple times to ensure smooth scrolling on wider screens without gaps
-  const tickerItems = [...displayMatches, ...displayMatches, ...displayMatches]; 
+    const fetchAndSetMatches = async () => {
+      const allMatches = await sportApiService.getMatches();
+      const relevantMatches = allMatches.filter(m => m.status === 'live' || m.status === 'upcoming');
+      setInternalMatches(relevantMatches.slice(0, 20));
+    };
+
+    fetchAndSetMatches();
+    const unsubscribe = sportApiService.subscribeToUpdates((updatedMatches) => {
+      const relevant = updatedMatches.filter(m => m.status === 'live' || m.status === 'upcoming');
+      setInternalMatches(relevant.slice(0, 20));
+    });
+
+    return () => unsubscribe();
+  }, [propMatches]);
+
+  const displayMatches = propMatches || internalMatches;
+  const filteredMatches = displayMatches.filter(m => m.status === 'live' || m.status === 'upcoming');
+
+  if (filteredMatches.length === 0) return null;
 
   return (
-    <div className="bg-brand-900 border-b border-brand-800 h-9 overflow-hidden flex items-center relative z-40 select-none">
-      {/* Gradients for smooth fade in/out on sides */}
-      <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-brand-900 to-transparent z-10"></div>
-      <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-brand-900 to-transparent z-10"></div>
+    <div className="bg-brand-950/80 backdrop-blur-sm border-b border-brand-800/50 h-8 flex items-center overflow-hidden whitespace-nowrap select-none">
+      <div className="flex items-center gap-2 px-4 bg-brand-accent/10 h-full border-r border-brand-800/50">
+        <span className="w-2 h-2 rounded-full bg-brand-accent animate-pulse"></span>
+        <span className="text-[10px] font-black text-brand-accent uppercase tracking-tighter">Live Scores</span>
+      </div>
       
-      <div className="flex animate-marquee whitespace-nowrap items-center min-w-full">
-        {tickerItems.map((match, idx) => (
-          <div key={`${match.id}-${idx}`} className="flex items-center gap-3 px-6 border-r border-brand-800/50 h-full flex-shrink-0">
-             <div className="flex items-center gap-1.5">
-                {match.status === 'live' ? (
-                   <div className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                   </div>
-                ) : (
-                   <Calendar size={10} className="text-slate-500" />
-                )}
-                {match.countryCode && (
-                   getFlag(match.countryCode).startsWith('http') 
-                   ? <img src={getFlag(match.countryCode)} className="w-3 h-2 object-cover rounded-sm" alt="flag" />
-                   : <span className="text-[10px]">{getFlag(match.countryCode)}</span>
-                )}
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">{match.league}</span>
-             </div>
-             
-             <div className="flex items-center gap-2 text-xs font-bold text-white">
-                <div className="flex items-center gap-1">
-                   {match.homeCountryCode && (
-                       <img src={getFlag(match.homeCountryCode)} className="w-3 h-2 object-cover rounded-sm" alt="flag" />
-                   )}
-                   <span className="text-slate-200">{match.homeTeam}</span>
-                </div>
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${match.status === 'live' ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 'bg-brand-800 text-brand-accent'}`}>
-                   {match.status === 'upcoming' ? 'VS' : `${match.homeScore} - ${match.awayScore}`}
+      <div className="flex-1 overflow-hidden relative">
+        <motion.div 
+          className="flex items-center gap-8 px-8 w-max"
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ 
+            duration: 60, 
+            repeat: Infinity, 
+            ease: "linear" 
+          }}
+        >
+          {/* Duplicate matches for seamless loop */}
+          {[...filteredMatches, ...filteredMatches].map((match, idx) => (
+            <div key={`${match.id}-${idx}`} className="flex items-center gap-3">
+              <span className="text-[10px] font-bold text-slate-500 uppercase">{match.league}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-black text-white">{match.homeTeam}</span>
+                <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${match.status === 'live' ? 'bg-red-500 text-white' : 'bg-brand-800 text-slate-400'}`}>
+                  {match.status === 'live' ? `${match.homeScore} - ${match.awayScore}` : match.time}
                 </span>
-                <div className="flex items-center gap-1">
-                   <span className="text-slate-200">{match.awayTeam}</span>
-                   {match.awayCountryCode && (
-                       <img src={getFlag(match.awayCountryCode)} className="w-3 h-2 object-cover rounded-sm" alt="flag" />
-                   )}
-                </div>
-             </div>
-             
-             {match.status === 'live' && (
-                <span className="text-[9px] font-mono text-slate-500">{match.time}</span>
-             )}
-          </div>
-        ))}
+                <span className="text-[11px] font-black text-white">{match.awayTeam}</span>
+              </div>
+              <span className="text-slate-700">|</span>
+            </div>
+          ))}
+        </motion.div>
       </div>
     </div>
   );

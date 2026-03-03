@@ -38,7 +38,7 @@ export const initiatePayment = ({ amount, email, phone, name, onSuccess, onClose
         name: name,
       },
       customizations: {
-        title: "SportBet Pro Rechargement",
+        title: "SportBot Pro Rechargement",
         description: "Dépôt sur compte parieur",
         logo: "https://cdn-icons-png.flaticon.com/512/404/404626.png", // Logo générique de sport
       },

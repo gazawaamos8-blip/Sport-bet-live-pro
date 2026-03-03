@@ -222,7 +222,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       </div>
       
       <div className="absolute bottom-6 text-center">
-         <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Secured by SportBet Corp © 2025</p>
+         <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Secured by SportBot Corp © 2026</p>
       </div>
     </div>
   );

@@ -166,7 +166,7 @@ class Database {
       type: 'bet_stake',
       amount: bet.stake,
       status: 'success',
-      provider: 'SportBet System'
+      provider: 'SportBot System'
     });
 
     // 2. Save Bet Slip
@@ -201,7 +201,7 @@ class Database {
             type: 'bet_win',
             amount: winningAmount,
             status: 'success',
-            provider: 'SportBet Payout'
+            provider: 'SportBot Payout'
         });
         }
     }

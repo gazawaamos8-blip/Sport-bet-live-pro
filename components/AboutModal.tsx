@@ -102,7 +102,7 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
 
             {/* Footer */}
             <div className="border-t border-brand-800 pt-8 flex flex-col md:flex-row justify-between items-center text-slate-500 text-sm">
-                <p>&copy; 2025 SportBet Corp. Tous droits réservés.</p>
+                <p>&copy; 2026 SportBot Corp. Tous droits réservés.</p>
                 <div className="flex gap-4 mt-4 md:mt-0">
                     <span>Termes & Conditions</span>
                     <span>Confidentialité</span>

@@ -3,6 +3,7 @@ import { Match, MatchEvent, Lineup, LineupPlayer, SportType } from '../types';
 import { fetchLineups, fetchH2H, getFlag } from '../services/sportApiService';
 import { analyzeMatch } from '../services/geminiService';
 import { X, Trophy, Activity, Camera, Timer, User as UserIcon, Sparkles, Users, History, BrainCircuit, Shirt } from 'lucide-react';
+import MatchTracker from './MatchTracker';
 
 interface MatchDetailProps {
   match: Match;
@@ -184,16 +185,25 @@ const MatchDetail: React.FC<MatchDetailProps> = ({ match, onClose }) => {
 
       <div className="p-4 max-w-2xl mx-auto w-full pb-10">
          {activeTab === 'timeline' && (
-             <div className="relative">
-                 <div className="absolute left-[24px] top-0 bottom-0 w-px bg-brand-700 -z-10"></div>
-                 {match.events && match.events.length > 0 ? (
-                     match.events.map(event => <EventRow key={event.id} event={event} />)
-                 ) : (
-                     <div className="text-center py-10 text-slate-500 italic flex flex-col items-center">
-                         <Timer size={40} className="mb-2 opacity-20"/>
-                         En attente d'événements marquants...
+             <div className="space-y-6">
+                 {/* Live Match Tracker (Pitch) */}
+                 {match.status === 'live' && (
+                     <div className="animate-fade-in">
+                         <MatchTracker match={match} />
                      </div>
                  )}
+
+                 <div className="relative">
+                     <div className="absolute left-[24px] top-0 bottom-0 w-px bg-brand-700 -z-10"></div>
+                     {match.events && match.events.length > 0 ? (
+                         match.events.map(event => <EventRow key={event.id} event={event} />)
+                     ) : (
+                         <div className="text-center py-10 text-slate-500 italic flex flex-col items-center">
+                             <Timer size={40} className="mb-2 opacity-20"/>
+                             En attente d'événements marquants...
+                         </div>
+                     )}
+                 </div>
              </div>
          )}
 

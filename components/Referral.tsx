@@ -6,7 +6,7 @@ const Referral: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'members' | 'payouts'>('dashboard');
   const [copied, setCopied] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const referralCode = "PRO2025VIP";
+  const referralCode = "PRO2026VIP";
   const commissionBalance = 154500;
 
   const handleCopy = () => {
@@ -32,7 +32,7 @@ const Referral: React.FC = () => {
          <div className="flex justify-between items-start">
             <div>
                <h2 className="text-2xl font-black text-white italic uppercase mb-1">Affiliation <span className="text-brand-accent">VIP</span></h2>
-               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Programme Partenaire 2025</p>
+               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Programme Partenaire 2026</p>
             </div>
             <div className="bg-brand-accent text-brand-900 text-xs font-black px-3 py-1 rounded-full animate-pulse shadow-[0_0_10px_#00d062]">
                Niveau: GOLD
@@ -140,7 +140,7 @@ const Referral: React.FC = () => {
                 </div>
                 <div className="bg-brand-800 rounded-xl border border-brand-700 overflow-hidden">
                     <div className="p-4 border-b border-brand-700 flex justify-between items-center">
-                        <span className="text-xs font-bold text-slate-400">15 Oct 2025</span>
+                        <span className="text-xs font-bold text-slate-400">15 Oct 2026</span>
                         <span className="bg-green-500/20 text-green-500 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Payé</span>
                     </div>
                     <div className="p-4 flex justify-between items-center">
@@ -150,7 +150,7 @@ const Referral: React.FC = () => {
                 </div>
                 <div className="bg-brand-800 rounded-xl border border-brand-700 overflow-hidden">
                     <div className="p-4 border-b border-brand-700 flex justify-between items-center">
-                        <span className="text-xs font-bold text-slate-400">01 Oct 2025</span>
+                        <span className="text-xs font-bold text-slate-400">01 Oct 2026</span>
                         <span className="bg-green-500/20 text-green-500 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Payé</span>
                     </div>
                     <div className="p-4 flex justify-between items-center">

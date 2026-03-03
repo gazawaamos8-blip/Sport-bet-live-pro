@@ -29,7 +29,7 @@ const FAKE_MESSAGES = [
 
 const LiveChat: React.FC<LiveChatProps> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: '1', user: 'System', text: 'Bienvenue dans le Chat Live SportBet Pro !', time: 'Now', isUser: false, isSystem: true },
+    { id: '1', user: 'System', text: 'Bienvenue dans le Chat Live SportBot Pro !', time: 'Now', isUser: false, isSystem: true },
     { id: '2', user: 'Moussa237', phone: '694***84', text: 'Salut la team, des pronos pour ce soir ?', time: '12:00', isUser: false },
   ]);
   const [inputText, setInputText] = useState('');

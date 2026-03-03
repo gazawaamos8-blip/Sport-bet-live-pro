@@ -21,7 +21,7 @@ const VideoHub: React.FC<VideoHubProps> = ({ matches }) => {
   useEffect(() => {
     const fetchVideos = async () => {
       setLoading(true);
-      const videos = await searchLiveSports('football match direct live 2025');
+      const videos = await searchLiveSports('football match direct live 2026');
       setYoutubeVideos(videos);
       
       if (videos.length > 0) {

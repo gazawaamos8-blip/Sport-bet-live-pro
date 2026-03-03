@@ -13,6 +13,7 @@ export interface User {
   };
   lastDailyBonus?: string; // Date string ISO
   hasReceivedFirstDepositBonus?: boolean;
+  hasDownloadedApp?: boolean;
 }
 
 export interface Player {
@@ -92,6 +93,11 @@ export interface Match {
     draw: number;
     away: number;
   };
+  doubleChance?: {
+    homeDraw: number;
+    homeAway: number;
+    drawAway: number;
+  };
   aiProbabilities?: {
     home: number;
     draw: number;
@@ -103,6 +109,13 @@ export interface Match {
   events?: MatchEvent[];
   highlights?: MatchHighlight[];
   stats?: MatchStats;
+  liveAction?: {
+    type: 'attack' | 'danger' | 'goal' | 'corner' | 'freekick' | 'penalty' | 'normal';
+    team: 'home' | 'away' | 'none';
+    x: number; // 0-100
+    y: number; // 0-100
+    message: string;
+  };
   standings?: Standing[]; // Optional linked data
   lineups?: { home: Lineup; away: Lineup };
   h2h?: Match[];
@@ -119,7 +132,7 @@ export interface CasinoGame {
 
 export interface BetSlipItem {
   matchId: string;
-  selection: 'home' | 'draw' | 'away';
+  selection: 'home' | 'draw' | 'away' | 'homeDraw' | 'homeAway' | 'drawAway';
   odds: number;
   matchInfo: string;
   league?: string;
@@ -182,5 +195,6 @@ export enum AppSection {
   STATISTICS = 'STATISTICS',
   RESPONSIBLE_GAMING = 'RESPONSIBLE_GAMING',
   NEWS = 'NEWS',
-  LEADERBOARD = 'LEADERBOARD'
+  LEADERBOARD = 'LEADERBOARD',
+  ASSISTANT = 'ASSISTANT'
 }

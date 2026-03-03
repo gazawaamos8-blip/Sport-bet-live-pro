@@ -24,8 +24,12 @@ import StatisticsView from './components/StatisticsView';
 import ResponsibleGamingView from './components/ResponsibleGamingView';
 import NewsHub from './components/NewsHub';
 import Leaderboard from './components/Leaderboard';
+import AssistantView from './components/AssistantView';
+import AppInstallPrompt from './components/AppInstallPrompt';
+import SearchPage from './components/SearchPage';
 import { BetSlipItem, AppSection, PlacedBet, User, Match } from './types';
 import { Home, Trophy, Ticket, Activity, Tv, Gamepad2, AlertTriangle, PartyPopper, Calendar, Minus, Plus, Save, X, Menu, BrainCircuit, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { fetchMatches, subscribeToMatchUpdates, checkBetResults } from './services/sportApiService';
 import { db } from './services/database';
 import { t, setAppLanguage, getAppLanguage } from './services/localization';
@@ -47,6 +51,7 @@ const App = () => {
   const [aboutOpen, setAboutOpen] = useState(false); 
   const [chatOpen, setChatOpen] = useState(false);
   const [betSlipOpen, setBetSlipOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   
   // Data
   const [betSlip, setBetSlip] = useState<BetSlipItem[]>([]);
@@ -119,10 +124,7 @@ const App = () => {
   // --- SEARCH ---
   const handleSearch = (query: string) => {
       setSearchQuery(query);
-      // Only switch to HOME if we are not in a section that supports search (like Casino)
-      if (query && currentSection !== AppSection.HOME && currentSection !== AppSection.CASINO) {
-          setCurrentSection(AppSection.HOME);
-      }
+      setIsSearchOpen(true);
   };
 
   // --- BETTING LOGIC ---
@@ -173,9 +175,19 @@ const App = () => {
   };
 
   const handleTransaction = (amount: number, type: 'deposit' | 'withdraw', provider: string) => {
-      const msg = type === 'deposit' 
+      let msg = type === 'deposit' 
         ? `Dépôt de ${amount.toLocaleString()} F réussi via ${provider}`
         : `Retrait de ${amount.toLocaleString()} F initié via ${provider}`;
+      
+      if (type === 'deposit' && user && !user.hasReceivedFirstDepositBonus) {
+          const bonus = amount; // 100% bonus
+          db.updateBalance(bonus, 'add');
+          const updatedUser = { ...user, hasReceivedFirstDepositBonus: true };
+          setUser(updatedUser);
+          db.saveUser(updatedUser);
+          msg += `\n🎁 Bonus de premier dépôt : +${bonus.toLocaleString()} F !`;
+      }
+      
       showNotification(msg, 'success');
   };
 
@@ -191,7 +203,10 @@ const App = () => {
   const totalOdds = betSlip.reduce((acc, item) => acc * item.odds, 1);
 
   return (
-    <div className="min-h-screen bg-brand-900 pb-20 relative">
+    <div className="min-h-screen bg-brand-900 pb-20 relative overflow-hidden">
+      {/* Decorative Background Elements */}
+      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-accent/5 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/5 rounded-full blur-[120px] pointer-events-none"></div>
       
       {/* GLOBAL NOTIFICATION */}
       {notification && (
@@ -219,8 +234,6 @@ const App = () => {
         onSearch={handleSearch} 
       />
 
-      <ScoreTicker matches={allMatches} />
-
       <div className="flex flex-col min-h-screen">
          {/* MAIN CONTENT AREA */}
          <div className="flex-1 pb-24">
@@ -228,6 +241,7 @@ const App = () => {
            {currentSection === AppSection.HOME && (
              <>
                {!searchQuery && <Carousel />}
+               {!searchQuery && <ScoreTicker matches={allMatches} />}
                
                {/* Match of the Day AI Banner */}
                {!searchQuery && matchOfDay && (
@@ -318,7 +332,7 @@ const App = () => {
                    <div className="w-20 h-20 bg-brand-highlight/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-brand-highlight">
                        <Trophy size={40} className="text-brand-highlight" />
                    </div>
-                   <h2 className="text-2xl font-black text-white italic uppercase mb-2">Club VIP SportBet</h2>
+                   <h2 className="text-2xl font-black text-white italic uppercase mb-2">Club VIP SportBot</h2>
                    <p className="text-slate-400 text-sm mb-6">Accédez à des avantages exclusifs, des retraits prioritaires et des bonus personnalisés.</p>
                    <div className="grid grid-cols-2 gap-3">
                        <div className="bg-brand-800 p-4 rounded-xl border border-brand-700">
@@ -360,6 +374,7 @@ const App = () => {
 
            {currentSection === AppSection.NEWS && <NewsHub />}
            {currentSection === AppSection.LEADERBOARD && <Leaderboard />}
+           {currentSection === AppSection.ASSISTANT && <AssistantView />}
          </div>
       </div>
 
@@ -507,6 +522,18 @@ const App = () => {
       <AboutModal isOpen={aboutOpen} onClose={() => setAboutOpen(false)} />
       <LiveChat isOpen={chatOpen} onClose={() => setChatOpen(false)} />
       {selectedMatch && <MatchDetail match={selectedMatch} onClose={() => setSelectedMatch(null)} />}
+      
+      <AnimatePresence>
+        {isSearchOpen && (
+          <SearchPage 
+            onClose={() => setIsSearchOpen(false)} 
+            initialQuery={searchQuery} 
+          />
+        )}
+      </AnimatePresence>
+
+      {/* App Install Prompt */}
+      {user && <AppInstallPrompt />}
 
     </div>
   );

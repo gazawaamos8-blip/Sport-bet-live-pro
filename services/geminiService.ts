@@ -112,7 +112,7 @@ export const generateChatBotMessage = async (lastBet: PlacedBet | undefined, fea
         }
 
         const prompt = `
-            Tu es le Chatbot IA officiel de SportBet Pro.
+            Tu es le Chatbot IA officiel de SportBot Pro.
             Génère un message court (1 phrase max) pour le chat public.
             
             Contexte:

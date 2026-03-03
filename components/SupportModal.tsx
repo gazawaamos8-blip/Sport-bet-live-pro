@@ -145,7 +145,7 @@ const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) => {
                     <div className="space-y-4 animate-fade-in text-slate-300 text-sm leading-relaxed">
                         <div className="bg-brand-800 p-4 rounded-xl border border-brand-700">
                             <h4 className="text-white font-bold mb-2">1. Acceptation des Conditions</h4>
-                            <p className="mb-2">En utilisant SportBet Pro, vous acceptez d'être lié par ces termes. Vous devez avoir au moins 21 ans pour parier.</p>
+                            <p className="mb-2">En utilisant SportBot Pro, vous acceptez d'être lié par ces termes. Vous devez avoir au moins 21 ans pour parier.</p>
                             
                             <h4 className="text-white font-bold mb-2 mt-4">2. Jeu Responsable</h4>
                             <p className="mb-2">Le pari sportif comporte des risques. Ne pariez jamais plus que ce que vous pouvez vous permettre de perdre. Nous proposons des outils d'auto-exclusion.</p>
@@ -154,7 +154,7 @@ const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) => {
                             <p className="mb-2">Toutes les transactions sont sécurisées par nos partenaires (Flutterwave, PayPal). Les retraits doivent être effectués vers un compte au même nom que l'utilisateur.</p>
                             
                             <h4 className="text-white font-bold mb-2 mt-4">4. Annulation de Paris</h4>
-                            <p>SportBet Pro se réserve le droit d'annuler tout pari en cas d'erreur de cote manifeste ou de suspicion de fraude.</p>
+                            <p>SportBot Pro se réserve le droit d'annuler tout pari en cas d'erreur de cote manifeste ou de suspicion de fraude.</p>
                         </div>
                     </div>
                 )}

@@ -22,9 +22,9 @@ const BetDetailModal: React.FC<BetDetailModalProps> = ({ bet, onClose }) => {
     if (navigator.share) {
         try {
             await navigator.share({
-                title: 'SportBet Pro Ticket',
-                text: `Regarde mon pari ! Gain potentiel: ${bet.potentialWin.toLocaleString()} F\nCode Promo: ${bet.promoCode || 'EUROVIC'}`,
-                url: window.location.href
+                title: 'Sport Bet',
+                text: `Regarde mon pari ! Gain potentiel: ${bet.potentialWin.toLocaleString()} F Code Promo: EUROVIC https://ais-dev-fuuqsfldi6ecrfv657ceum-48676101579.europe-west2.run.app/`,
+                url: 'https://sportbet.app/'
             });
         } catch (err) {
             console.error("Error sharing:", err);
@@ -76,12 +76,12 @@ Statut: ${bet.status.toUpperCase()}
       <div className="bg-white p-4 flex items-center justify-between border-b border-slate-100 shadow-sm sticky top-0 z-10 print:hidden">
          <div className="flex items-center gap-4">
             <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                <ArrowLeft size={24} className="text-slate-600" />
+                <ArrowLeft size={24} className="text-slate-800" />
             </button>
-            <h2 className="text-xl font-bold text-slate-800">{t('betDetails')}</h2>
+            <h2 className="text-xl font-bold text-slate-800 leading-tight">Détails du<br/>Pari</h2>
          </div>
-         <div className="text-xs font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded">
-            {bet.id}
+         <div className="text-xs font-mono text-slate-400 bg-slate-100 px-3 py-2 rounded-lg break-all max-w-[120px]">
+            BET-{bet.id}
          </div>
       </div>
 
@@ -95,29 +95,29 @@ Statut: ${bet.status.toUpperCase()}
          </div>
 
          {/* Summary Card */}
-         <div className="bg-white rounded-xl p-4 shadow-sm mb-4 relative z-10 print:shadow-none print:border print:border-black">
-             <div className="flex justify-between items-center mb-2">
+         <div className="bg-white rounded-xl p-5 shadow-sm mb-4 relative z-10 print:shadow-none print:border print:border-black border border-slate-100">
+             <div className="flex justify-between items-center mb-6">
                  <div className="flex items-center gap-2">
-                     <Ticket className="text-slate-400" size={18} />
-                     <span className="font-bold text-slate-700">{t('events')} : {bet.items.length}</span>
+                     <Ticket className="text-slate-400" size={20} />
+                     <span className="font-bold text-slate-800 text-lg">Événements : {bet.items.length}</span>
                  </div>
-                 <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${isPaid ? 'bg-green-100 text-green-600' : isLost ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-600'}`}>
-                    {isPaid ? t('won') : isLost ? t('lost') : t('pending')}
+                 <div className={`px-3 py-1 rounded text-xs font-black uppercase ${isPaid ? 'bg-green-100 text-green-600' : isLost ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-600'}`}>
+                    {isPaid ? t('won') : isLost ? t('lost') : 'EN COURS'}
                  </div>
              </div>
              
-             <div className="space-y-2 mt-4">
-                 <div className="flex justify-between">
-                     <span className="text-slate-500 font-medium">Cote :</span>
-                     <span className="font-bold text-slate-800">{bet.totalOdds}</span>
+             <div className="space-y-4">
+                 <div className="flex justify-between items-center">
+                     <span className="text-slate-500 text-lg">Cote :</span>
+                     <span className="font-bold text-slate-800 text-xl">{bet.totalOdds}</span>
                  </div>
-                 <div className="flex justify-between">
-                     <span className="text-slate-500 font-medium">{t('stake')} :</span>
-                     <span className="font-bold text-slate-800">{bet.stake.toLocaleString()} F</span>
+                 <div className="flex justify-between items-center">
+                     <span className="text-slate-500 text-lg">Mise :</span>
+                     <span className="font-bold text-slate-800 text-xl">{bet.stake.toLocaleString()} F</span>
                  </div>
-                 <div className="flex justify-between">
-                     <span className="text-slate-500 font-medium">{t('potentialWin')} :</span>
-                     <span className={`font-black text-xl ${isPaid ? 'text-green-600' : 'text-slate-800'}`}>{bet.potentialWin.toLocaleString()} F</span>
+                 <div className="flex justify-between items-center">
+                     <span className="text-slate-500 text-lg">Gains Possibles :</span>
+                     <span className={`font-black text-2xl ${isPaid ? 'text-green-600' : 'text-slate-800'}`}>{bet.potentialWin.toLocaleString()} F</span>
                  </div>
              </div>
          </div>
@@ -125,49 +125,45 @@ Statut: ${bet.status.toUpperCase()}
          {/* Match List */}
          <div className="space-y-3 relative z-10">
             {bet.items.map((item, idx) => (
-                <div key={idx} className="bg-white rounded-xl p-4 shadow-sm relative overflow-hidden print:break-inside-avoid">
+                <div key={idx} className="bg-white rounded-xl p-5 shadow-sm relative overflow-hidden print:break-inside-avoid border border-slate-100">
                     {/* Left decoration line */}
-                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${isPaid ? 'bg-green-500' : isLost ? 'bg-red-500' : 'bg-slate-300'}`}></div>
+                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${isPaid ? 'bg-green-500' : isLost ? 'bg-red-500' : 'bg-slate-300'}`}></div>
                     
-                    <div className="pl-3">
-                        <div className="flex items-center gap-2 mb-2">
+                    <div className="pl-4">
+                        <div className="flex items-center gap-2 mb-4">
                             {item.countryCode && (
                                 getFlag(item.countryCode).startsWith('http') 
-                                ? <img src={getFlag(item.countryCode)} className="w-4 h-3 object-cover rounded-sm" alt="flag" />
-                                : <span className="text-[10px]">{getFlag(item.countryCode)}</span>
+                                ? <img src={getFlag(item.countryCode)} className="w-5 h-3.5 object-cover rounded-sm" alt="flag" />
+                                : <span className="text-xs">{getFlag(item.countryCode)}</span>
                             )}
-                            <span className="text-xs font-bold text-slate-400 uppercase">{item.league || item.sport}</span>
+                            <span className="text-sm font-bold text-slate-500 uppercase tracking-wide">{item.league || item.sport}</span>
                         </div>
                         
-                        <div className="flex justify-between items-center mb-3">
-                            <div className="flex items-center gap-2 flex-1">
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-3 flex-1">
                                 {item.homeCountryCode && (
-                                    <img src={getFlag(item.homeCountryCode)} className="w-5 h-3.5 object-cover rounded-sm border border-slate-100" alt="flag" />
+                                    <img src={getFlag(item.homeCountryCode)} className="w-6 h-4 object-cover rounded-sm border border-slate-100" alt="flag" />
                                 )}
-                                <span className="font-bold text-slate-800">{item.matchInfo.split(' vs ')[0]}</span>
+                                <span className="font-bold text-slate-900 text-lg">{item.matchInfo.split(' vs ')[0]}</span>
                             </div>
                             
-                            <div className="font-mono font-black text-sm bg-slate-100 px-2 py-0.5 rounded text-slate-400 mx-2">
+                            <div className="font-bold text-sm bg-slate-100 px-3 py-1 rounded text-slate-400 mx-4">
                                 VS
                             </div>
                             
-                            <div className="flex items-center gap-2 flex-1 justify-end">
-                                <span className="font-bold text-slate-800 text-right">{item.matchInfo.split(' vs ')[1]}</span>
+                            <div className="flex items-center gap-3 flex-1 justify-end">
+                                <span className="font-bold text-slate-900 text-lg text-right">{item.matchInfo.split(' vs ')[1]}</span>
                                 {item.awayCountryCode && (
-                                    <img src={getFlag(item.awayCountryCode)} className="w-5 h-3.5 object-cover rounded-sm border border-slate-100" alt="flag" />
+                                    <img src={getFlag(item.awayCountryCode)} className="w-6 h-4 object-cover rounded-sm border border-slate-100" alt="flag" />
                                 )}
                             </div>
                         </div>
                         
-                        <div className="flex justify-between items-center pt-3 border-t border-slate-100">
-                            <div>
-                                <div className="text-xs font-bold text-slate-500 mb-0.5">
-                                    {t('coupon')}: {item.selection === 'home' ? '1' : item.selection === 'away' ? '2' : 'X'}
-                                </div>
+                        <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                            <div className="text-sm font-bold text-slate-600">
+                                Coupon: {item.selection === 'home' ? '1' : item.selection === 'away' ? '2' : item.selection === 'draw' ? 'X' : item.selection.replace('home', '1').replace('draw', 'X').replace('away', '2')}
                             </div>
-                            <div className="text-right">
-                                <div className="font-bold text-slate-800">{item.odds}</div>
-                            </div>
+                            <div className="font-bold text-slate-900 text-lg">{item.odds}</div>
                         </div>
                     </div>
                 </div>
@@ -177,26 +173,26 @@ Statut: ${bet.status.toUpperCase()}
       </div>
 
       {/* Footer Actions (Professional Buttons) */}
-      <div className="bg-white p-4 border-t border-slate-100 flex gap-4 print:hidden">
+      <div className="bg-white p-4 border-t border-slate-100 flex gap-3 print:hidden">
           <button 
              onClick={handlePrint}
-             className="flex-1 py-3 rounded-lg border-2 border-slate-200 text-slate-600 font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
+             className="flex-1 py-3.5 rounded-xl border-2 border-slate-200 text-slate-600 font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
           >
-              <Printer size={18} /> {t('print')}
+              <Printer size={20} /> Imprimer
           </button>
           
           <button 
              onClick={handleShare}
-             className="flex-1 py-3 rounded-lg bg-slate-900 text-white font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors"
+             className="flex-1 py-3.5 rounded-xl bg-[#1a242d] text-white font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors"
           >
-              <Share2 size={18} /> {t('share')}
+              <Share2 size={20} /> Partager
           </button>
 
           <button 
              onClick={handleDownload}
-             className="flex-1 py-3 rounded-lg bg-brand-accent text-brand-900 font-bold flex items-center justify-center gap-2 hover:bg-emerald-400 transition-colors"
+             className="flex-1 py-3.5 rounded-xl bg-[#00e676] text-slate-900 font-bold flex items-center justify-center gap-2 hover:bg-[#00c853] transition-colors"
           >
-              <Download size={18} /> {t('download')}
+              <Download size={20} /> Télécharger
           </button>
       </div>
     </div>

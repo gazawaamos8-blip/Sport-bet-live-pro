@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppSection, User } from '../types';
 import { db } from '../services/database';
-import { X, Home, Activity, Calendar, Tv, Gamepad2, Users, Settings, HelpCircle, LogOut, ChevronRight, Wallet, Trophy, Clock, Bookmark, FileText, Gift, BarChart2, ShieldCheck, Star, Zap, Newspaper, Medal } from 'lucide-react';
+import { X, Home, Activity, Calendar, Tv, Gamepad2, Users, Settings, HelpCircle, LogOut, ChevronRight, Wallet, Trophy, Clock, Bookmark, FileText, Gift, BarChart2, ShieldCheck, Star, Zap, Newspaper, Medal, Download } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -50,6 +50,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentSection, onNa
       alert(`Félicitations ! Vous avez reçu un bonus quotidien de ${bonusAmount} F !`);
   };
 
+  const handleDownloadApp = () => {
+      const user = db.getUser();
+      if (user && !user.hasDownloadedApp) {
+          const bonusAmount = 100;
+          db.updateBalance(bonusAmount, 'add');
+          user.hasDownloadedApp = true;
+          db.saveUser(user);
+          alert(`Félicitations ! Vous avez reçu ${bonusAmount} CFA pour le téléchargement de l'application SportBot !`);
+      }
+      // In a real app, this would trigger the actual APK download
+      window.open('https://ais-dev-fuuqsfldi6ecrfv657ceum-48676101579.europe-west2.run.app/sportbet.apk', '_blank');
+  };
+
   const menuItems = [
     { id: AppSection.HOME, label: 'Accueil', icon: Home, color: 'text-brand-accent' },
     { id: AppSection.LIVE, label: 'En Direct', icon: Activity, color: 'text-red-500' },
@@ -82,11 +95,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentSection, onNa
         
         {/* Header */}
         <div className="p-5 bg-brand-800 border-b border-brand-700 flex justify-between items-center">
-             <div className="flex flex-col">
-                 <h2 className="text-xl font-black italic text-white tracking-tighter">
-                    SPORTBET<span className="text-brand-accent">PRO</span>
-                 </h2>
-                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Édition Live</p>
+             <div className="flex items-center gap-3">
+                 <img src="https://raw.githubusercontent.com/gazawaamos8-blip/Icon-sport-bet-pro/refs/heads/main/sportbet-icon%20(1).png" alt="Sport Bet" className="w-10 h-10 object-contain" />
+                 <div className="flex flex-col">
+                     <h2 className="text-xl font-black italic text-white tracking-tighter uppercase">
+                        sportbot
+                     </h2>
+                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Édition Live</p>
+                 </div>
              </div>
              <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-colors">
                  <X size={20} />
@@ -142,6 +158,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentSection, onNa
                 <HelpCircle size={20} />
                 <span className="text-sm font-bold">Aide en ligne</span>
             </button>
+
+            <div className="h-px bg-brand-800 my-2 mx-3"></div>
+            
+            <div className="px-3 py-2">
+                <button 
+                    onClick={handleDownloadApp}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-xs uppercase py-3 rounded-xl hover:from-blue-500 hover:to-indigo-500 transition-all shadow-lg flex flex-col items-center justify-center gap-1 border border-blue-400/30 relative overflow-hidden group"
+                >
+                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                    <div className="flex items-center gap-2 relative z-10">
+                        <Download size={16} className="animate-bounce" />
+                        <span>Télécharger l'App</span>
+                    </div>
+                    <span className="text-[9px] text-blue-200 font-medium relative z-10 bg-black/20 px-2 py-0.5 rounded-full mt-1">
+                        +100 CFA Offerts !
+                    </span>
+                </button>
+            </div>
         </div>
 
         {/* Footer */}

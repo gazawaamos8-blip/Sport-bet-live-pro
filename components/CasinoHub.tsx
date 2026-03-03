@@ -5,6 +5,7 @@ import { Play, Flame, Search, X, Sparkles } from 'lucide-react';
 import { db } from '../services/database';
 import RouletteGame from './RouletteGame';
 import CrashGame from './CrashGame';
+import CasinoCarousel from './CasinoCarousel';
 
 interface CasinoHubProps {
   searchQuery?: string;
@@ -77,6 +78,8 @@ const CasinoHub: React.FC<CasinoHubProps> = ({ searchQuery = '' }) => {
                  <span className="text-xs font-bold text-white uppercase">Solde: {balance.toLocaleString()} F</span>
              </div>
          </div>
+
+         <CasinoCarousel />
 
          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
              {categories.map(cat => (

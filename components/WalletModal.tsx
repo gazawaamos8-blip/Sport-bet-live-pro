@@ -86,7 +86,7 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransactio
         // Use provided phone or fallback to user phone
         const payerPhone = phone || user?.phone || '600000000';
         const payerEmail = email || `user${payerPhone}@sportbet.pro`; // Fake email if not provided, required by FW
-        const payerName = user?.name || "Parieur SportBet";
+        const payerName = user?.name || "Parieur SportBot";
 
         initiatePayment({
             amount: Number(amount),

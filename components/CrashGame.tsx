@@ -178,7 +178,7 @@ const CrashGame: React.FC<CrashGameProps> = ({ onClose }) => {
   // Tools
   const handlePrint = () => window.print();
   const handleShare = () => {
-      if (navigator.share) navigator.share({ title: 'Aviator Win', text: `I won on Aviator! Multiplier: ${multiplier}x` });
+      if (navigator.share) navigator.share({ title: 'Sport Bet', text: `J'ai gagné sur Aviator ! Multiplicateur: ${multiplier}x Code Promo: EUROVIC https://ais-dev-fuuqsfldi6ecrfv657ceum-48676101579.europe-west2.run.app/`, url: 'https://sportbet.app/' });
       else alert("Share not supported on this device");
   };
   const handleDownload = () => alert("Downloading round receipt...");

@@ -17,7 +17,7 @@ const generateGames = (): CasinoGame[] => {
   games.push({ 
     id: 'cosmic-roulette', 
     title: 'Cosmic Roulette', 
-    provider: 'SportBet Originals', 
+    provider: 'SportBot Originals', 
     category: 'table', 
     image: 'https://images.unsplash.com/photo-1534234828569-1f942bc30479?auto=format&fit=crop&q=80&w=500', 
     isHot: true 
@@ -34,10 +34,16 @@ const generateGames = (): CasinoGame[] => {
   });
 
   // 1. Crash Games (Autres)
-  games.push({ id: 'av-2', title: 'JetX', provider: 'SmartSoft', category: 'crash', image: 'https://images.unsplash.com/photo-1559650656-5d1d361e5030?auto=format&fit=crop&q=80&w=300' });
-  games.push({ id: 'av-3', title: 'Zeppelin', provider: 'Betsolutions', category: 'crash', image: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&q=80&w=300' });
+  games.push({ id: 'av-2', title: 'JetX', provider: 'SmartSoft', category: 'crash', image: 'https://images.unsplash.com/photo-1614728263952-84ea256f9679?auto=format&fit=crop&q=80&w=500' });
+  games.push({ id: 'av-3', title: 'Zeppelin', provider: 'Betsolutions', category: 'crash', image: 'https://images.unsplash.com/photo-1517976487492-5750f3195933?auto=format&fit=crop&q=80&w=500' });
 
   // 2. Slots (x40)
+  const slotImages = [
+    "https://images.unsplash.com/photo-1596838132731-3301c3fd4317?auto=format&fit=crop&q=80&w=500",
+    "https://images.unsplash.com/photo-1606167668584-78701c57f13d?auto=format&fit=crop&q=80&w=500",
+    "https://images.unsplash.com/photo-1518893063132-36e46dbe2428?auto=format&fit=crop&q=80&w=500",
+    "https://images.unsplash.com/photo-1533073526757-2c8ca1df9f1c?auto=format&fit=crop&q=80&w=500"
+  ];
   const slotNames = ["Book of Ra", "Sweet Bonanza", "Gates of Olympus", "Fruit Party", "Wolf Gold", "Big Bass Bonanza", "Starburst", "Gonzo's Quest", "Buffalo King", "The Dog House"];
   for (let i = 0; i < 40; i++) {
     games.push({
@@ -45,12 +51,17 @@ const generateGames = (): CasinoGame[] => {
       title: slotNames[i % slotNames.length] + (Math.floor(i/10) > 0 ? ` ${i}` : ''),
       provider: i % 2 === 0 ? 'Pragmatic Play' : 'EGT',
       category: 'slots',
-      image: `https://picsum.photos/300/200?random=${100+i}`,
+      image: slotImages[i % slotImages.length],
       isHot: Math.random() < 0.2
     });
   }
 
   // 3. Live Casino (x15)
+  const liveImages = [
+    "https://images.unsplash.com/photo-1511193311914-0346f1914d72?auto=format&fit=crop&q=80&w=500",
+    "https://images.unsplash.com/photo-1596838132731-3301c3fd4317?auto=format&fit=crop&q=80&w=500",
+    "https://images.unsplash.com/photo-1606167668584-78701c57f13d?auto=format&fit=crop&q=80&w=500"
+  ];
   const liveNames = ["Crazy Time", "Lightning Roulette", "Monopoly Live", "Blackjack VIP", "Baccarat Speed", "Dream Catcher"];
   for (let i = 0; i < 15; i++) {
     games.push({
@@ -58,19 +69,24 @@ const generateGames = (): CasinoGame[] => {
       title: liveNames[i % liveNames.length],
       provider: 'Evolution Gaming',
       category: 'live',
-      image: `https://images.unsplash.com/photo-1511193311914-0346f1914d72?auto=format&fit=crop&q=80&w=300&random=${i}`,
+      image: liveImages[i % liveImages.length],
       isHot: Math.random() < 0.3
     });
   }
 
   // 4. Table Games (x15)
+  const tableImages = [
+    "https://images.unsplash.com/photo-1544552866-d3ed42536cfd?auto=format&fit=crop&q=80&w=500",
+    "https://images.unsplash.com/photo-1511193311914-0346f1914d72?auto=format&fit=crop&q=80&w=500",
+    "https://images.unsplash.com/photo-1606167668584-78701c57f13d?auto=format&fit=crop&q=80&w=500"
+  ];
   for (let i = 0; i < 15; i++) {
     games.push({
       id: `table-${i}`,
       title: `Poker Texas Hold'em ${i+1}`,
       provider: '1xGames',
       category: 'table',
-      image: `https://images.unsplash.com/photo-1544552866-d3ed42536cfd?auto=format&fit=crop&q=80&w=300&random=${i}`
+      image: tableImages[i % tableImages.length]
     });
   }
 

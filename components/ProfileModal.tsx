@@ -141,7 +141,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onLo
            <button onClick={onLogout} className="w-full py-3 rounded-xl bg-red-500/10 text-red-500 font-bold flex items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-all">
               <LogOut size={18} /> Déconnexion
            </button>
-           <p className="text-center text-[10px] text-slate-600 mt-3 font-mono">Version 2.5.0 (Build 2025)</p>
+           <p className="text-center text-[10px] text-slate-600 mt-3 font-mono">Version 2.5.0 (Build 2026)</p>
         </div>
 
       </div>
