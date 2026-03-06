@@ -82,6 +82,7 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                         src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1000" 
                         alt="Stadium Tech" 
                         className="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-105" 
+                        referrerPolicy="no-referrer"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-brand-900 to-transparent opacity-80"></div>
                     <div className="absolute bottom-4 left-4">
@@ -94,9 +95,9 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             <div className="bg-brand-800 rounded-3xl p-8 border border-brand-700 text-center">
                 <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-6">Partenaires Technologiques</p>
                 <div className="flex flex-wrap justify-center gap-8 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Google_Cloud_logo.svg/1024px-Google_Cloud_logo.svg.png" className="h-8" alt="Google Cloud" />
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/1667px-Apple_logo_black.svg.png" className="h-8 invert" alt="Apple" />
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/MongoDB_Logo.svg" className="h-8" alt="MongoDB" />
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Google_Cloud_logo.svg/1024px-Google_Cloud_logo.svg.png" className="h-8" alt="Google Cloud" referrerPolicy="no-referrer" />
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/1667px-Apple_logo_black.svg.png" className="h-8 invert" alt="Apple" referrerPolicy="no-referrer" />
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/MongoDB_Logo.svg" className="h-8" alt="MongoDB" referrerPolicy="no-referrer" />
                 </div>
             </div>
 

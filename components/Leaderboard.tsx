@@ -25,7 +25,7 @@ const Leaderboard: React.FC = () => {
                 {/* 2nd */}
                 <div className="flex flex-col items-center">
                     <div className="relative">
-                        <img src={LEADERS[1].avatar} className="w-16 h-16 rounded-full border-4 border-slate-400 shadow-lg" alt="2nd" />
+                        <img src={LEADERS[1].avatar} className="w-16 h-16 rounded-full border-4 border-slate-400 shadow-lg" alt="2nd" referrerPolicy="no-referrer" />
                         <div className="absolute -top-2 -right-2 bg-slate-400 text-brand-900 w-6 h-6 rounded-full flex items-center justify-center font-black text-xs">2</div>
                     </div>
                     <div className="bg-brand-800 h-24 w-24 mt-2 rounded-t-xl border-t-2 border-slate-400 flex flex-col items-center justify-center">
@@ -37,7 +37,7 @@ const Leaderboard: React.FC = () => {
                 {/* 1st */}
                 <div className="flex flex-col items-center scale-110 z-10">
                     <div className="relative">
-                        <img src={LEADERS[0].avatar} className="w-20 h-20 rounded-full border-4 border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.4)]" alt="1st" />
+                        <img src={LEADERS[0].avatar} className="w-20 h-20 rounded-full border-4 border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.4)]" alt="1st" referrerPolicy="no-referrer" />
                         <div className="absolute -top-3 -right-3 bg-yellow-500 text-brand-900 w-8 h-8 rounded-full flex items-center justify-center font-black text-sm">1</div>
                         <Medal className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-yellow-500" size={24} />
                     </div>
@@ -50,7 +50,7 @@ const Leaderboard: React.FC = () => {
                 {/* 3rd */}
                 <div className="flex flex-col items-center">
                     <div className="relative">
-                        <img src={LEADERS[2].avatar} className="w-16 h-16 rounded-full border-4 border-orange-600 shadow-lg" alt="3rd" />
+                        <img src={LEADERS[2].avatar} className="w-16 h-16 rounded-full border-4 border-orange-600 shadow-lg" alt="3rd" referrerPolicy="no-referrer" />
                         <div className="absolute -top-2 -right-2 bg-orange-600 text-brand-900 w-6 h-6 rounded-full flex items-center justify-center font-black text-xs">3</div>
                     </div>
                     <div className="bg-brand-800 h-20 w-24 mt-2 rounded-t-xl border-t-2 border-orange-600 flex flex-col items-center justify-center">
@@ -65,7 +65,7 @@ const Leaderboard: React.FC = () => {
                 {LEADERS.map((leader, idx) => (
                     <div key={leader.id} className="bg-brand-800 p-4 rounded-xl border border-brand-700 flex items-center gap-4">
                         <span className="text-slate-500 font-black w-4">{idx + 1}</span>
-                        <img src={leader.avatar} className="w-10 h-10 rounded-full border border-brand-600" alt={leader.name} />
+                        <img src={leader.avatar} className="w-10 h-10 rounded-full border border-brand-600" alt={leader.name} referrerPolicy="no-referrer" />
                         <div className="flex-1">
                             <p className="text-white font-bold text-sm">{leader.name}</p>
                             <div className="flex items-center gap-2 text-[10px] font-bold">

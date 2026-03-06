@@ -22,11 +22,14 @@ import CouponList from './components/CouponList';
 import TransactionHistory from './components/TransactionHistory';
 import StatisticsView from './components/StatisticsView';
 import ResponsibleGamingView from './components/ResponsibleGamingView';
+import PromotionsHub from './components/PromotionsHub';
 import NewsHub from './components/NewsHub';
 import Leaderboard from './components/Leaderboard';
 import AssistantView from './components/AssistantView';
 import AppInstallPrompt from './components/AppInstallPrompt';
 import SearchPage from './components/SearchPage';
+import PaymentVerificationGate from './components/PaymentVerificationGate';
+import MonetizationModal from './components/MonetizationModal';
 import { BetSlipItem, AppSection, PlacedBet, User, Match } from './types';
 import { Home, Trophy, Ticket, Activity, Tv, Gamepad2, AlertTriangle, PartyPopper, Calendar, Minus, Plus, Save, X, Menu, BrainCircuit, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -48,6 +51,7 @@ const App = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [monetizationOpen, setMonetizationOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false); 
   const [chatOpen, setChatOpen] = useState(false);
   const [betSlipOpen, setBetSlipOpen] = useState(false);
@@ -203,7 +207,8 @@ const App = () => {
   const totalOdds = betSlip.reduce((acc, item) => acc * item.odds, 1);
 
   return (
-    <div className="min-h-screen bg-brand-900 pb-20 relative overflow-hidden">
+    <PaymentVerificationGate>
+      <div className="min-h-screen bg-brand-900 pb-20 relative overflow-hidden">
       {/* Decorative Background Elements */}
       <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-accent/5 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/5 rounded-full blur-[120px] pointer-events-none"></div>
@@ -310,22 +315,7 @@ const App = () => {
            {currentSection === AppSection.RESPONSIBLE_GAMING && <ResponsibleGamingView />}
            
            {/* NEW SECTIONS */}
-           {currentSection === AppSection.PROMOTIONS && (
-               <div className="p-4 animate-fade-in">
-                   <h2 className="text-xl font-black text-white italic uppercase mb-4 flex items-center gap-2"><Sparkles className="text-orange-400"/> Promotions</h2>
-                   <div className="space-y-4">
-                       <div className="bg-gradient-to-r from-brand-800 to-brand-700 p-4 rounded-2xl border border-brand-600">
-                           <p className="text-brand-accent font-black text-lg">BONUS 100% PREMIER DÉPÔT</p>
-                           <p className="text-slate-300 text-sm">Doublez votre premier dépôt jusqu'à 100.000 F !</p>
-                           <button className="mt-3 bg-brand-accent text-brand-900 font-bold px-4 py-2 rounded-lg text-xs uppercase">En profiter</button>
-                       </div>
-                       <div className="bg-gradient-to-r from-brand-800 to-brand-700 p-4 rounded-2xl border border-brand-600">
-                           <p className="text-yellow-500 font-black text-lg">COTE BOOSTÉE DU JOUR</p>
-                           <p className="text-slate-300 text-sm">Profitez de cotes augmentées sur les chocs de la Champions League.</p>
-                       </div>
-                   </div>
-               </div>
-           )}
+           {currentSection === AppSection.PROMOTIONS && <PromotionsHub />}
 
            {currentSection === AppSection.VIP_CLUB && (
                <div className="p-4 animate-fade-in text-center">
@@ -502,6 +492,7 @@ const App = () => {
         onOpenProfile={() => setProfileOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
         onOpenSupport={() => setSupportOpen(true)}
+        onOpenMonetization={() => setMonetizationOpen(true)}
         onLogout={handleLogout}
         balance={balance}
       />
@@ -519,6 +510,7 @@ const App = () => {
       />
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} onUpdate={() => {}} />
       <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
+      <MonetizationModal isOpen={monetizationOpen} onClose={() => setMonetizationOpen(false)} />
       <AboutModal isOpen={aboutOpen} onClose={() => setAboutOpen(false)} />
       <LiveChat isOpen={chatOpen} onClose={() => setChatOpen(false)} />
       {selectedMatch && <MatchDetail match={selectedMatch} onClose={() => setSelectedMatch(null)} />}
@@ -536,6 +528,7 @@ const App = () => {
       {user && <AppInstallPrompt />}
 
     </div>
+    </PaymentVerificationGate>
   );
 };
 

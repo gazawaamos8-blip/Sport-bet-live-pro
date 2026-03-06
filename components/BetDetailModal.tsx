@@ -133,7 +133,7 @@ Statut: ${bet.status.toUpperCase()}
                         <div className="flex items-center gap-2 mb-4">
                             {item.countryCode && (
                                 getFlag(item.countryCode).startsWith('http') 
-                                ? <img src={getFlag(item.countryCode)} className="w-5 h-3.5 object-cover rounded-sm" alt="flag" />
+                                ? <img src={getFlag(item.countryCode)} className="w-5 h-3.5 object-cover rounded-sm" alt="flag" referrerPolicy="no-referrer" />
                                 : <span className="text-xs">{getFlag(item.countryCode)}</span>
                             )}
                             <span className="text-sm font-bold text-slate-500 uppercase tracking-wide">{item.league || item.sport}</span>
@@ -142,7 +142,7 @@ Statut: ${bet.status.toUpperCase()}
                         <div className="flex justify-between items-center mb-6">
                             <div className="flex items-center gap-3 flex-1">
                                 {item.homeCountryCode && (
-                                    <img src={getFlag(item.homeCountryCode)} className="w-6 h-4 object-cover rounded-sm border border-slate-100" alt="flag" />
+                                    <img src={getFlag(item.homeCountryCode)} className="w-6 h-4 object-cover rounded-sm border border-slate-100" alt="flag" referrerPolicy="no-referrer" />
                                 )}
                                 <span className="font-bold text-slate-900 text-lg">{item.matchInfo.split(' vs ')[0]}</span>
                             </div>
@@ -154,7 +154,7 @@ Statut: ${bet.status.toUpperCase()}
                             <div className="flex items-center gap-3 flex-1 justify-end">
                                 <span className="font-bold text-slate-900 text-lg text-right">{item.matchInfo.split(' vs ')[1]}</span>
                                 {item.awayCountryCode && (
-                                    <img src={getFlag(item.awayCountryCode)} className="w-6 h-4 object-cover rounded-sm border border-slate-100" alt="flag" />
+                                    <img src={getFlag(item.awayCountryCode)} className="w-6 h-4 object-cover rounded-sm border border-slate-100" alt="flag" referrerPolicy="no-referrer" />
                                 )}
                             </div>
                         </div>

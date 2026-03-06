@@ -65,15 +65,33 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransactio
       onClose();
   };
 
+  // Simulation for Deposit
+  const handleDepositSimulation = (method: string) => {
+      setLoading(true);
+      setStatusMsg({ type: 'info', text: `Redirection vers ${method}...` });
+      
+      setTimeout(() => {
+          if (method === 'PayPal') {
+              window.open('https://www.paypal.com/checkout', '_blank');
+          }
+          
+          setTimeout(() => {
+              finalizeTransaction(Number(amount), 'deposit', method);
+              setStatusMsg({ type: 'success', text: `Dépôt via ${method} réussi !` });
+          }, 2000);
+      }, 1500);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
     if (!amount && activeTab !== 'deposit' && paymentMethod !== 'crypto') {
-         // Crypto deposit doesn't strictly need amount input first as it's push
+         setStatusMsg({ type: 'error', text: "Veuillez entrer un montant." });
+         return;
     } else if (Number(amount) < 100 && activeTab === 'withdraw') {
-        setStatusMsg({ type: 'error', text: t('minWithdraw') + " 100 XAF." });
-        return;
+         setStatusMsg({ type: 'error', text: t('minWithdraw') + " 100 XAF." });
+         return;
     }
 
     setLoading(true);
@@ -105,23 +123,34 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransactio
         return; // Stop execution here, let FW handle the rest
     }
 
-    // SIMULATION FOR OTHER METHODS (PayPal, Crypto, Withdrawals)
+    // PayPal Deposit Simulation
+    if (activeTab === 'deposit' && paymentMethod === 'paypal') {
+        handleDepositSimulation('PayPal');
+        return;
+    }
+
+    // Crypto Deposit Simulation
+    if (activeTab === 'deposit' && paymentMethod === 'crypto') {
+        handleDepositSimulation(`Crypto (${cryptoNetwork})`);
+        return;
+    }
+
+    // SIMULATION FOR WITHDRAWALS
     setTimeout(() => {
         let providerLabel = 'System';
         if (paymentMethod === 'paypal') providerLabel = 'PayPal';
         if (paymentMethod === 'crypto') providerLabel = `Crypto (${cryptoNetwork})`;
+        if (paymentMethod === 'momo') providerLabel = 'Mobile Money';
+        if (paymentMethod === 'card') providerLabel = 'Carte Bancaire';
 
-        if (activeTab === 'deposit') {
-            finalizeTransaction(Number(amount) || 0, 'deposit', providerLabel);
+        // Withdraw logic
+        const currentBalance = db.getBalance();
+        if (currentBalance >= Number(amount)) {
+            finalizeTransaction(Number(amount), 'withdraw', providerLabel);
+            setStatusMsg({ type: 'success', text: `Retrait via ${providerLabel} initié avec succès !` });
         } else {
-            // Withdraw logic
-            const currentBalance = db.getBalance();
-            if (currentBalance >= Number(amount)) {
-                finalizeTransaction(Number(amount), 'withdraw', providerLabel);
-            } else {
-                setStatusMsg({ type: 'error', text: "Solde insuffisant." });
-                setLoading(false);
-            }
+            setStatusMsg({ type: 'error', text: "Solde insuffisant." });
+            setLoading(false);
         }
     }, 2500);
   };

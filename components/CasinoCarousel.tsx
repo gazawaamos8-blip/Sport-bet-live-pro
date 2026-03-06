@@ -32,6 +32,7 @@ const CasinoCarousel: React.FC = () => {
             src={img}
             alt={`Slide ${index + 1}`}
             className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-brand-900/80 to-transparent"></div>
         </div>

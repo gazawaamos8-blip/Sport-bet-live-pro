@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppSection, User } from '../types';
 import { db } from '../services/database';
-import { X, Home, Activity, Calendar, Tv, Gamepad2, Users, Settings, HelpCircle, LogOut, ChevronRight, Wallet, Trophy, Clock, Bookmark, FileText, Gift, BarChart2, ShieldCheck, Star, Zap, Newspaper, Medal, Download } from 'lucide-react';
+import { X, Home, Activity, Calendar, Tv, Gamepad2, Users, Settings, HelpCircle, LogOut, ChevronRight, Wallet, Trophy, Clock, Bookmark, FileText, Gift, BarChart2, ShieldCheck, Star, Zap, Newspaper, Medal, Download, DollarSign } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,11 +12,12 @@ interface SidebarProps {
   onOpenProfile: () => void;
   onOpenSettings: () => void;
   onOpenSupport: () => void;
+  onOpenMonetization: () => void;
   onLogout: () => void;
   balance: number;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentSection, onNavigate, onOpenWallet, onOpenProfile, onOpenSettings, onOpenSupport, onLogout, balance }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentSection, onNavigate, onOpenWallet, onOpenProfile, onOpenSettings, onOpenSupport, onOpenMonetization, onLogout, balance }) => {
   const [canClaimBonus, setCanClaimBonus] = useState(false);
 
   useEffect(() => {
@@ -96,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentSection, onNa
         {/* Header */}
         <div className="p-5 bg-brand-800 border-b border-brand-700 flex justify-between items-center">
              <div className="flex items-center gap-3">
-                 <img src="https://raw.githubusercontent.com/gazawaamos8-blip/Icon-sport-bet-pro/refs/heads/main/sportbet-icon%20(1).png" alt="Sport Bet" className="w-10 h-10 object-contain" />
+                 <img src="https://raw.githubusercontent.com/gazawaamos8-blip/Icon-sport-bet-pro/refs/heads/main/sportbet-icon%20(1).png" alt="Sport Bet" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
                  <div className="flex flex-col">
                      <h2 className="text-xl font-black italic text-white tracking-tighter uppercase">
                         sportbot
@@ -143,7 +144,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentSection, onNa
 
             <div className="h-px bg-brand-800 my-2 mx-3"></div>
             
-            <p className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Support</p>
+            <p className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Support & Revenus</p>
+            <button 
+                onClick={() => { onClose(); onOpenMonetization(); }}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-emerald-500 hover:bg-emerald-500/10 transition-all border border-emerald-500/20 mb-2"
+            >
+                <DollarSign size={20} />
+                <span className="text-sm font-black uppercase italic">Activer la Monétisation</span>
+            </button>
             <button 
                 onClick={() => { onClose(); onOpenSettings(); }}
                 className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-brand-800/50 transition-all"

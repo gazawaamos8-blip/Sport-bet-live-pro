@@ -37,7 +37,7 @@ const EventRow: React.FC<{ event: MatchEvent }> = ({ event }) => {
           <div className="w-12 text-center text-xs font-mono font-bold text-slate-500">{event.minute}'</div>
           <div className={`flex-1 flex items-center gap-3 bg-brand-800 p-2 rounded-xl border border-brand-700 ${isHome ? '' : 'flex-row-reverse text-right'}`}>
               <div className="relative">
-                  <img src={event.player.photo} className="w-12 h-12 rounded-full border-2 border-brand-600 object-cover" alt={event.player.name} />
+                  <img src={event.player.photo} className="w-12 h-12 rounded-full border-2 border-brand-600 object-cover" alt={event.player.name} referrerPolicy="no-referrer" />
                   <div className="absolute -bottom-1 -right-1 bg-brand-900 rounded-full p-0.5">
                       {event.type === 'goal' && <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-[8px]">⚽</div>}
                       {event.type.includes('card') && <div className={`w-4 h-4 rounded-sm ${event.type === 'card_yellow' ? 'bg-yellow-500' : 'bg-red-500'}`}></div>}
@@ -68,10 +68,6 @@ const LineupView: React.FC<{ lineup: Lineup, color: string }> = ({ lineup, color
                     <div>
                         <div className="text-sm font-bold text-white leading-none">{p.name}</div>
                         <div className="text-[10px] text-slate-500 font-mono mt-0.5">{p.pos}</div>
-                    </div>
-                    {/* Simulated Live Stats */}
-                    <div className="ml-auto text-[10px] font-bold text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded">
-                        {Math.floor(Math.random() * 8) + 6}.{Math.floor(Math.random() * 9)}
                     </div>
                 </div>
             ))}
@@ -115,7 +111,7 @@ const MatchDetail: React.FC<MatchDetailProps> = ({ match, onClose }) => {
                 <div className="flex items-center justify-center gap-1 mb-0.5">
                     {match.countryCode && (
                         getFlag(match.countryCode).startsWith('http') 
-                        ? <img src={getFlag(match.countryCode)} className="w-4 h-3 object-cover rounded-sm" alt="flag" />
+                        ? <img src={getFlag(match.countryCode)} className="w-4 h-3 object-cover rounded-sm" alt="flag" referrerPolicy="no-referrer" />
                         : <span className="text-xs">{getFlag(match.countryCode)}</span>
                     )}
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{match.league}</span>
@@ -131,11 +127,11 @@ const MatchDetail: React.FC<MatchDetailProps> = ({ match, onClose }) => {
         <div className="flex justify-between items-center px-6 pb-6 pt-2">
              <div className="flex flex-col items-center w-1/3">
                  <div className="relative">
-                    <img src={match.homeLogo} className="w-16 h-16 rounded-full mb-2 bg-brand-800 p-2 border-2 border-brand-700" alt={match.homeTeam} />
+                    <img src={match.homeLogo} className="w-16 h-16 rounded-full mb-2 bg-brand-800 p-2 border-2 border-brand-700" alt={match.homeTeam} referrerPolicy="no-referrer" />
                     {match.homeCountryCode && !match.homeLogo?.includes('flagcdn.com') && (
                         <div className="absolute bottom-2 right-0 shadow-lg">
                             {getFlag(match.homeCountryCode).startsWith('http') 
-                                ? <img src={getFlag(match.homeCountryCode)} className="w-6 h-4 object-cover rounded-sm border border-brand-900" alt="flag" />
+                                ? <img src={getFlag(match.homeCountryCode)} className="w-6 h-4 object-cover rounded-sm border border-brand-900" alt="flag" referrerPolicy="no-referrer" />
                                 : <span className="bg-brand-900 rounded-full px-1 text-[10px]">{getFlag(match.homeCountryCode)}</span>
                             }
                         </div>
@@ -148,11 +144,11 @@ const MatchDetail: React.FC<MatchDetailProps> = ({ match, onClose }) => {
              </div>
              <div className="flex flex-col items-center w-1/3">
                  <div className="relative">
-                    <img src={match.awayLogo} className="w-16 h-16 rounded-full mb-2 bg-brand-800 p-2 border-2 border-brand-700" alt={match.awayTeam} />
+                    <img src={match.awayLogo} className="w-16 h-16 rounded-full mb-2 bg-brand-800 p-2 border-2 border-brand-700" alt={match.awayTeam} referrerPolicy="no-referrer" />
                     {match.awayCountryCode && !match.awayLogo?.includes('flagcdn.com') && (
                         <div className="absolute bottom-2 right-0 shadow-lg">
                             {getFlag(match.awayCountryCode).startsWith('http') 
-                                ? <img src={getFlag(match.awayCountryCode)} className="w-6 h-4 object-cover rounded-sm border border-brand-900" alt="flag" />
+                                ? <img src={getFlag(match.awayCountryCode)} className="w-6 h-4 object-cover rounded-sm border border-brand-900" alt="flag" referrerPolicy="no-referrer" />
                                 : <span className="bg-brand-900 rounded-full px-1 text-[10px]">{getFlag(match.awayCountryCode)}</span>
                             }
                         </div>
@@ -236,7 +232,7 @@ const MatchDetail: React.FC<MatchDetailProps> = ({ match, onClose }) => {
                  {h2h.map(h => (
                      <div key={h.id} className="bg-brand-800 p-3 rounded-xl border border-brand-700 flex justify-between items-center">
                          <div className="flex items-center gap-2 w-1/3">
-                             <img src={h.homeLogo} className="w-6 h-6 rounded-full" alt="" />
+                             <img src={h.homeLogo} className="w-6 h-6 rounded-full" alt="" referrerPolicy="no-referrer" />
                              <span className="text-xs text-white font-bold truncate">{h.homeTeam}</span>
                          </div>
                          <div className="bg-brand-900 px-3 py-1 rounded font-mono text-brand-accent font-bold">
@@ -244,7 +240,7 @@ const MatchDetail: React.FC<MatchDetailProps> = ({ match, onClose }) => {
                          </div>
                          <div className="flex items-center gap-2 w-1/3 justify-end">
                              <span className="text-xs text-white font-bold truncate">{h.awayTeam}</span>
-                             <img src={h.awayLogo} className="w-6 h-6 rounded-full" alt="" />
+                             <img src={h.awayLogo} className="w-6 h-6 rounded-full" alt="" referrerPolicy="no-referrer" />
                          </div>
                      </div>
                  ))}

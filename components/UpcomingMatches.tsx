@@ -126,7 +126,7 @@ const UpcomingMatches: React.FC<UpcomingMatchesProps> = ({ onOpenDetails, onAddT
                                  <span className="flex items-center gap-1">
                                      {match.countryCode && (
                                          getFlag(match.countryCode).startsWith('http') 
-                                         ? <img src={getFlag(match.countryCode)} className="w-4 h-3 object-cover rounded-sm" alt="flag" />
+                                         ? <img src={getFlag(match.countryCode)} className="w-4 h-3 object-cover rounded-sm" alt="flag" referrerPolicy="no-referrer" />
                                          : <span>{getFlag(match.countryCode)}</span>
                                      )}
                                      {match.league}
@@ -138,12 +138,12 @@ const UpcomingMatches: React.FC<UpcomingMatchesProps> = ({ onOpenDetails, onAddT
                                 <div className="flex flex-col items-center gap-2 flex-1">
                                     <div className="relative group/team">
                                         <div className="w-12 h-12 rounded-full bg-brand-700 p-1 border border-brand-600 shadow-lg">
-                                            <img src={match.homeLogo} className="w-full h-full rounded-full object-cover" alt={match.homeTeam} />
+                                            <img src={match.homeLogo} className="w-full h-full rounded-full object-cover" alt={match.homeTeam} referrerPolicy="no-referrer" />
                                         </div>
                                         {match.homeCountryCode && !match.homeLogo?.includes('flagcdn.com') && (
                                             <div className="absolute -bottom-1 -right-1 shadow-md">
                                                 {getFlag(match.homeCountryCode).startsWith('http') 
-                                                    ? <img src={getFlag(match.homeCountryCode)} className="w-4 h-3 object-cover rounded-sm border border-brand-900" alt="flag" />
+                                                    ? <img src={getFlag(match.homeCountryCode)} className="w-4 h-3 object-cover rounded-sm border border-brand-900" alt="flag" referrerPolicy="no-referrer" />
                                                     : <span className="bg-brand-900 rounded-full px-1 text-[8px]">{getFlag(match.homeCountryCode)}</span>
                                                 }
                                             </div>
@@ -160,12 +160,12 @@ const UpcomingMatches: React.FC<UpcomingMatchesProps> = ({ onOpenDetails, onAddT
                                 <div className="flex flex-col items-center gap-2 flex-1">
                                     <div className="relative group/team">
                                         <div className="w-12 h-12 rounded-full bg-brand-700 p-1 border border-brand-600 shadow-lg">
-                                            <img src={match.awayLogo} className="w-full h-full rounded-full object-cover" alt={match.awayTeam} />
+                                            <img src={match.awayLogo} className="w-full h-full rounded-full object-cover" alt={match.awayTeam} referrerPolicy="no-referrer" />
                                         </div>
                                         {match.awayCountryCode && !match.awayLogo?.includes('flagcdn.com') && (
                                             <div className="absolute -bottom-1 -right-1 shadow-md">
                                                 {getFlag(match.awayCountryCode).startsWith('http') 
-                                                    ? <img src={getFlag(match.awayCountryCode)} className="w-4 h-3 object-cover rounded-sm border border-brand-900" alt="flag" />
+                                                    ? <img src={getFlag(match.awayCountryCode)} className="w-4 h-3 object-cover rounded-sm border border-brand-900" alt="flag" referrerPolicy="no-referrer" />
                                                     : <span className="bg-brand-900 rounded-full px-1 text-[8px]">{getFlag(match.awayCountryCode)}</span>
                                                 }
                                             </div>

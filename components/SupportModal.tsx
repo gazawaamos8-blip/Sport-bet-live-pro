@@ -165,16 +165,16 @@ const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) => {
                     <div className="flex flex-wrap justify-center gap-6 opacity-60 grayscale hover:grayscale-0 transition-all">
                         {/* Logos simulés via texte/icones ou URLs */}
                         <div className="flex items-center gap-2">
-                             <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/MongoDB_Logo.svg" className="h-6" alt="MongoDB" />
+                             <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/MongoDB_Logo.svg" className="h-6" alt="MongoDB" referrerPolicy="no-referrer" />
                         </div>
                         <div className="flex items-center gap-2">
                              <div className="font-black text-white italic text-lg"><span className="text-orange-500">Flutter</span>wave</div>
                         </div>
                         <div className="flex items-center gap-2">
-                             <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" className="h-6" alt="PayPal" />
+                             <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" className="h-6" alt="PayPal" referrerPolicy="no-referrer" />
                         </div>
                         <div className="flex items-center gap-2">
-                             <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" className="h-6 bg-white rounded px-1" alt="Visa" />
+                             <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" className="h-6 bg-white rounded px-1" alt="Visa" referrerPolicy="no-referrer" />
                         </div>
                     </div>
                 </div>

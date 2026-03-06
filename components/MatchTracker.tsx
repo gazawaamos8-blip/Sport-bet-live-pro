@@ -67,12 +67,12 @@ const MatchTracker: React.FC<MatchTrackerProps> = ({ match }) => {
 
       {/* Team Labels */}
       <div className="absolute top-4 left-6 flex items-center gap-2 bg-brand-900/60 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-          <img src={match.homeLogo} className="w-4 h-4 rounded-full" alt="" />
+          <img src={match.homeLogo} className="w-4 h-4 rounded-full" alt="" referrerPolicy="no-referrer" />
           <span className="text-[10px] font-bold text-white uppercase">{match.homeTeam}</span>
       </div>
       <div className="absolute top-4 right-6 flex items-center gap-2 bg-brand-900/60 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
           <span className="text-[10px] font-bold text-white uppercase">{match.awayTeam}</span>
-          <img src={match.awayLogo} className="w-4 h-4 rounded-full" alt="" />
+          <img src={match.awayLogo} className="w-4 h-4 rounded-full" alt="" referrerPolicy="no-referrer" />
       </div>
 
       {/* Bottom Status Bar */}

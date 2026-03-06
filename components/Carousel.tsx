@@ -28,6 +28,7 @@ const Carousel: React.FC = () => {
             src={item.url} 
             alt={item.title} 
             className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
           />
           {/* SuperSport Style Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-brand-900 via-brand-900/40 to-transparent"></div>

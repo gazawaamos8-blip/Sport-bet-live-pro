@@ -48,7 +48,7 @@ const AppInstallPrompt: React.FC = () => {
                     <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/sportbet/400/200')] opacity-20 bg-cover bg-center mix-blend-overlay"></div>
                     <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
                         <div className="w-24 h-24 bg-brand-800 rounded-2xl border-4 border-brand-900 shadow-xl flex items-center justify-center p-2 overflow-hidden">
-                            <img src="https://raw.githubusercontent.com/gazawaamos8-blip/Icon-sport-bet-pro/refs/heads/main/sportbet-icon%20(1).png" alt="SportBot Pro" className="w-full h-full object-contain" />
+                            <img src="https://raw.githubusercontent.com/gazawaamos8-blip/Icon-sport-bet-pro/refs/heads/main/sportbet-icon%20(1).png" alt="SportBot Pro" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
                         </div>
                     </div>
                 </div>

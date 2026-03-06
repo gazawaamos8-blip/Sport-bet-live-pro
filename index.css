@@ -14,6 +14,12 @@
   --animate-fade-in: fadeIn 0.5s ease-out;
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-marquee: marquee 35s linear infinite;
+  --animate-scan-line: scanLine 2s linear infinite;
+
+  @keyframes scanLine {
+    0% { top: 0%; }
+    100% { top: 100%; }
+  }
 
   @keyframes fadeIn {
     0% { opacity: 0; transform: translateY(10px); }

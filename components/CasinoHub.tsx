@@ -117,7 +117,7 @@ const CasinoHub: React.FC<CasinoHubProps> = ({ searchQuery = '' }) => {
                 className="bg-brand-800 rounded-xl overflow-hidden border border-brand-700 relative group cursor-pointer hover:border-brand-accent transition-all shadow-lg"
               >
                   <div className="aspect-[4/3] relative">
-                      <img src={game.image} alt={game.title} className="w-full h-full object-cover" />
+                      <img src={game.image} alt={game.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       {game.isHot && (
                           <div className="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-lg flex items-center gap-1">
                               <Flame size={10} fill="currentColor" /> HOT

@@ -55,7 +55,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onOpenWallet, onOpenProfil
           <Menu size={24} />
         </button>
         <div className="flex items-center gap-2">
-          <img src="https://raw.githubusercontent.com/gazawaamos8-blip/Icon-sport-bet-pro/refs/heads/main/sportbet-icon%20(1).png" alt="Sport Bet" className="w-8 h-8 object-contain" />
+          <img src="https://raw.githubusercontent.com/gazawaamos8-blip/Icon-sport-bet-pro/refs/heads/main/sportbet-icon%20(1).png" alt="Sport Bet" className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
           <div className="text-lg md:text-xl font-bold bg-gradient-to-r from-brand-400 to-brand-accent bg-clip-text text-transparent hidden sm:block">
             SportBot<span className="text-white">Pro</span>
           </div>
@@ -208,7 +208,7 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onOpenWallet, onOpenProfil
         {/* User Profile Avatar (Always visible & Prominent) */}
         <button 
           onClick={onOpenProfile}
-          className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-tr from-brand-accent via-brand-500 to-purple-600 flex items-center justify-center border-2 border-white/30 shadow-[0_0_20px_rgba(0,208,98,0.3)] hover:scale-110 active:scale-90 transition-all ring-2 ring-brand-accent/20"
+          className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-tr from-brand-accent via-brand-500 to-purple-600 flex items-center justify-center border-2 border-white/30 shadow-[0_0_20px_rgba(0,208,98,0.3)] hover:scale-110 active:scale-90 transition-all ring-2 ring-brand-accent/20 flex-shrink-0"
         >
           <UserIcon size={20} className="text-white drop-shadow-md" />
         </button>

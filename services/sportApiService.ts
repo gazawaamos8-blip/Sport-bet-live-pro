@@ -857,6 +857,25 @@ export const getLeagueInfo = (leagueName: string) => {
     return Object.values(LEAGUES).find(l => l.name === leagueName);
 };
 
+// Realistic Player Names for Lineups and Events
+const PLAYER_NAMES = [
+    "Kylian Mbappé", "Lionel Messi", "Cristiano Ronaldo", "Erling Haaland", "Kevin De Bruyne", 
+    "Mohamed Salah", "Robert Lewandowski", "Vinícius Júnior", "Jude Bellingham", "Harry Kane",
+    "Bukayo Saka", "Phil Foden", "Rodri", "Bernardo Silva", "Antoine Griezmann",
+    "Luka Modrić", "Toni Kroos", "Federico Valverde", "Aurélien Tchouaméni", "Eduardo Camavinga",
+    "Sadio Mané", "Victor Osimhen", "Achraf Hakimi", "Riyad Mahrez", "Mohamed Kudus",
+    "André Onana", "Kalidou Koulibaly", "Thomas Partey", "Sébastien Haller", "Nicolas Jackson",
+    "Darwin Núñez", "Luis Díaz", "Alexis Mac Allister", "Dominik Szoboszlai", "Virgil van Dijk",
+    "Bruno Fernandes", "Marcus Rashford", "Alejandro Garnacho", "Rasmus Højlund", "Casemiro",
+    "Martin Ødegaard", "Declan Rice", "Gabriel Jesus", "Gabriel Martinelli", "William Saliba",
+    "Lautaro Martínez", "Marcus Thuram", "Nicolò Barella", "Hakan Çalhanoğlu", "Alessandro Bastoni",
+    "Rafael Leão", "Olivier Giroud", "Theo Hernández", "Mike Maignan", "Christian Pulisic",
+    "Dušan Vlahović", "Federico Chiesa", "Adrien Rabiot", "Manuel Locatelli", "Gleison Bremer",
+    "Jamal Musiala", "Harry Kane", "Leroy Sané", "Joshua Kimmich", "Alphonso Davies",
+    "Julian Brandt", "Marco Reus", "Gregor Kobel", "Nico Schlotterbeck", "Emre Can",
+    "Florian Wirtz", "Granit Xhaka", "Jeremie Frimpong", "Álex Grimaldo", "Victor Boniface"
+];
+
 const getPlayerPhoto = (seed: number) => `https://randomuser.me/api/portraits/men/${seed % 99}.jpg`;
 
 // Expanded Database of Leagues and Teams for 500+ matches generation
@@ -864,35 +883,35 @@ const LEAGUES = {
   // --- FOOTBALL ---
   NPFL: {
       name: "Nigeria Premier League", category: 'africa', code: 'ng', sport: 'football',
-      teams: ["Enyimba", "Remo Stars", "Lobi Stars", "Kano Pillars", "Rangers Int.", "Rivers Utd", "Plateau Utd", "Bendel Insurance", "Shooting Stars", "Kwara Utd"]
+      teams: ["Enyimba", "Remo Stars", "Lobi Stars", "Kano Pillars", "Rangers Int.", "Rivers Utd", "Plateau Utd", "Bendel Insurance", "Shooting Stars", "Kwara Utd", "Akwa Utd", "Abia Warriors", "Heartland FC", "Gombe Utd", "Niger Tornadoes", "Katsina Utd", "Sporting Lagos", "Bayelsa Utd", "Doma Utd", "Sunshine Stars"]
   },
   BOTOLA: {
       name: "Botola Pro", category: 'africa', code: 'ma', sport: 'football',
-      teams: ["Raja CA", "Wydad AC", "AS FAR", "RS Berkane", "FUS Rabat", "Maghreb Fes", "Ittihad Tanger", "Moghreb Tetouan", "JS Soualem", "Union Touarga"]
+      teams: ["Raja CA", "Wydad AC", "AS FAR", "RS Berkane", "FUS Rabat", "Maghreb Fes", "Ittihad Tanger", "Moghreb Tetouan", "JS Soualem", "Union Touarga", "Chabab Mohammedia", "Mouloudia Oujda", "Renaissance Zemamra", "Youssoufia Berrechid", "JS Soualem", "Union Touarga", "Chabab Mohammedia", "Mouloudia Oujda", "Renaissance Zemamra", "Youssoufia Berrechid"]
   },
   LIGUE1_DZ: {
       name: "Ligue 1 Algérie", category: 'africa', code: 'dz', sport: 'football',
-      teams: ["MC Alger", "CR Belouizdad", "JS Kabylie", "ES Sétif", "USM Alger", "Paradou AC", "CS Constantine", "JS Saoura", "MC Oran", "ASO Chlef"]
+      teams: ["MC Alger", "CR Belouizdad", "JS Kabylie", "ES Sétif", "USM Alger", "Paradou AC", "CS Constantine", "JS Saoura", "MC Oran", "ASO Chlef", "US Biskra", "NC Magra", "ES Ben Aknoun", "US Souf", "US Biskra", "NC Magra", "ES Ben Aknoun", "US Souf", "US Biskra", "NC Magra"]
   },
   PSL_SA: {
       name: "PSL South Africa", category: 'africa', code: 'za', sport: 'football',
-      teams: ["Mamelodi Sundowns", "Orlando Pirates", "Kaizer Chiefs", "SuperSport Utd", "Cape Town City", "Stellenbosch", "Sekhukhune Utd", "TS Galaxy", "Golden Arrows", "AmaZulu"]
+      teams: ["Mamelodi Sundowns", "Orlando Pirates", "Kaizer Chiefs", "SuperSport Utd", "Cape Town City", "Stellenbosch", "Sekhukhune Utd", "TS Galaxy", "Golden Arrows", "AmaZulu", "Polokwane City", "Chippa Utd", "Moroka Swallows", "Richards Bay", "Cape Town Spurs", "Polokwane City", "Chippa Utd", "Moroka Swallows", "Richards Bay", "Cape Town Spurs"]
   },
   EGYPT_PL: {
       name: "Egyptian Premier League", category: 'africa', code: 'eg', sport: 'football',
-      teams: ["Al Ahly", "Zamalek", "Pyramids FC", "Al Masry", "Future FC", "Smouha", "ZED FC", "Ceramica Cleopatra", "Al Ittihad", "Enppi"]
+      teams: ["Al Ahly", "Zamalek", "Pyramids FC", "Al Masry", "Future FC", "Smouha", "ZED FC", "Ceramica Cleopatra", "Al Ittihad", "Enppi", "Tala'ea El Gaish", "National Bank", "Ismaily", "El Gouna", "Modern Future", "Enppi", "Tala'ea El Gaish", "National Bank", "Ismaily", "El Gouna"]
   },
   TUNISIA_L1: {
       name: "Ligue 1 Tunisie", category: 'africa', code: 'tn', sport: 'football',
-      teams: ["Espérance Tunis", "Étoile du Sahel", "Club Africain", "CS Sfaxien", "US Monastir", "Stade Tunisien", "CA Bizertin", "ES Métlaoui"]
+      teams: ["Espérance Tunis", "Étoile du Sahel", "Club Africain", "CS Sfaxien", "US Monastir", "Stade Tunisien", "CA Bizertin", "ES Métlaoui", "US Tataouine", "Olympique Béja", "AS Soliman", "EGS Gafsa", "US Tataouine", "Olympique Béja", "AS Soliman", "EGS Gafsa", "US Tataouine", "Olympique Béja", "AS Soliman", "EGS Gafsa"]
   },
   GHANA_PL: {
       name: "Ghana Premier League", category: 'local', code: 'gh', sport: 'football',
-      teams: ["Asante Kotoko", "Hearts of Oak", "Medeama SC", "Aduana Stars", "Bechem Utd", "Nsoatreman", "Berekum Chelsea", "Legon Cities", "Bibiani Gold Stars", "Karela Utd", "Great Olympics", "Heart of Lions"]
+      teams: ["Asante Kotoko", "Hearts of Oak", "Medeama SC", "Aduana Stars", "Bechem Utd", "Nsoatreman", "Berekum Chelsea", "Legon Cities", "Bibiani Gold Stars", "Karela Utd", "Great Olympics", "Heart of Lions", "Medeama SC", "Aduana Stars", "Bechem Utd", "Nsoatreman", "Berekum Chelsea", "Legon Cities", "Bibiani Gold Stars", "Karela Utd"]
   },
   SENEGAL_L1: {
       name: "Ligue 1 Sénégal", category: 'local', code: 'sn', sport: 'football',
-      teams: ["Teungueth FC", "Jaraaf", "Pikine", "Casa Sports", "Guédiawaye", "Dakar Sacré-Cœur", "US Ouakam", "Stade de Mbour", "Génération Foot", "Diambars", "AS Douanes", "ASC Linguère", "ASC Diaraf", "US Gorée"]
+      teams: ["Teungueth FC", "Jaraaf", "Pikine", "Casa Sports", "Guédiawaye", "Dakar Sacré-Cœur", "US Ouakam", "Stade de Mbour", "Génération Foot", "Diambars", "AS Douanes", "ASC Linguère", "ASC Diaraf", "US Gorée", "Teungueth FC", "Jaraaf", "Pikine", "Casa Sports", "Guédiawaye", "Dakar Sacré-Cœur"]
   },
   CIV_L1: { 
       name: "Ligue 1 Côte d'Ivoire", category: 'local', code: 'ci', sport: 'football',
@@ -902,29 +921,32 @@ const LEAGUES = {
       name: "UEFA Champions League", category: 'europe', code: 'eu', sport: 'football',
       teams: [
           "Real Madrid", "Barcelona", "Bayern Munich", "Man City", "PSG", "Liverpool", "Arsenal", "Inter Milan", 
-          "AC Milan", "Juventus", "Dortmund", "Atlético", "Chelsea", "Man Utd", "Bayer Leverkusen", "Napoli"
+          "AC Milan", "Juventus", "Dortmund", "Atlético", "Chelsea", "Man Utd", "Bayer Leverkusen", "Napoli",
+          "Benfica", "Porto", "Sporting CP", "Ajax", "PSV", "Feyenoord", "Lazio", "Roma", "Atalanta", "RB Leipzig"
       ] 
   },
   PL: { 
       name: "Premier League", category: 'europe', code: 'gb', sport: 'football',
-      teams: ["Liverpool", "Chelsea", "Man Utd", "Spurs", "Newcastle", "Aston Villa", "West Ham", "Brighton", "Bournemouth", "Fulham", "Wolves", "Everton", "Brentford", "Nottingham", "Palace", "Luton", "Burnley", "Sheffield Utd", "Leicester", "Leeds", "Southampton"] 
+      teams: ["Liverpool", "Chelsea", "Man Utd", "Spurs", "Newcastle", "Aston Villa", "West Ham", "Brighton", "Bournemouth", "Fulham", "Wolves", "Everton", "Brentford", "Nottingham", "Palace", "Luton", "Burnley", "Sheffield Utd", "Leicester", "Leeds", "Southampton", "Arsenal", "Man City", "Aston Villa", "Newcastle", "Spurs"] 
   },
   LIGA: { 
       name: "La Liga", category: 'europe', code: 'es', sport: 'football',
-      teams: ["Sevilla", "Atletico", "Valencia", "Betis", "Girona", "Bilbao", "Espanyol", "Barcelona", "Real Madrid", "Sociedad", "Villarreal", "Mallorca", "Osasuna", "Rayo Vallecano", "Getafe", "Alavés", "Las Palmas", "Granada", "Cadiz"] 
+      teams: ["Sevilla", "Atletico", "Valencia", "Betis", "Girona", "Bilbao", "Espanyol", "Barcelona", "Real Madrid", "Sociedad", "Villarreal", "Mallorca", "Osasuna", "Rayo Vallecano", "Getafe", "Alavés", "Las Palmas", "Granada", "Cadiz", "Celta Vigo", "Almeria", "Mallorca", "Osasuna", "Rayo Vallecano", "Getafe", "Alavés", "Las Palmas", "Granada", "Cadiz"] 
   },
   SERIEA: {
       name: "Serie A", category: 'europe', code: 'it', sport: 'football',
-      teams: ["Juventus", "AC Milan", "Inter Milan", "Napoli", "Roma", "Lazio", "Atalanta", "Fiorentina", "Bologna", "Torino", "Monza", "Genoa", "Lecce", "Sassuolo", "Udinese", "Empoli", "Verona", "Cagliari"]
+      teams: ["Juventus", "AC Milan", "Inter Milan", "Napoli", "Roma", "Lazio", "Atalanta", "Fiorentina", "Bologna", "Torino", "Monza", "Genoa", "Lecce", "Sassuolo", "Udinese", "Empoli", "Verona", "Cagliari", "Salernitana", "Frosinone", "Napoli", "Roma", "Lazio", "Atalanta", "Fiorentina"]
   },
   BUNDESLIGA: {
       name: "Bundesliga", category: 'europe', code: 'de', sport: 'football',
-      teams: ["Bayern Munich", "Dortmund", "Leipzig", "Leverkusen", "Frankfurt", "Wolfsburg", "Stuttgart", "Freiburg", "Hoffenheim", "Gladbach", "Werder Bremen", "Augsburg", "Mainz", "Heidenheim", "Union Berlin"]
+      teams: ["Bayern Munich", "Dortmund", "Leipzig", "Leverkusen", "Frankfurt", "Wolfsburg", "Stuttgart", "Freiburg", "Hoffenheim", "Gladbach", "Werder Bremen", "Augsburg", "Mainz", "Heidenheim", "Union Berlin", "Darmstadt", "Koln", "Bayern Munich", "Dortmund", "Leipzig", "Leverkusen", "Frankfurt"]
   },
   LIGUE1: {
       name: "Ligue 1", category: 'europe', code: 'fr', sport: 'football',
       teams: ["PSG", "Marseille", "Lyon", "Monaco", "Lille", "Lens", "Rennes", "Nice", "Reims", "Toulouse", "Montpellier", "Strasbourg", "Brest", "Nantes", "Lorient", "Metz", "Le Havre", "Clermont Foot", "Auxerre", "Angers SCO", "Saint-Étienne", "Bordeaux FC", "Paris FC", "Troyes", "Ajaccio", "Caen", "Guingamp", "Rodez", "Pau FC", "Amiens", "Grenoble", "Laval", "Annecy", "Concarneau", "Quevilly", "Valenciennes", "Dunkerque", "Red Star", "Martigues", "Niort", "Orléans", "Nancy-Lorraine", "Châteauroux", "Sochaux", "Nîmes", "Le Mans FC", "Dijon FCO", "Versailles", "Cholet SO", "Avranches", "Villefranche", "Marignane", "Epinal", "Goyave", "Bastia", "Bastia-Borgo", "Sedan", "Boulogne", "Creteil", "Bourg-en-Bresse", "Concarneau US", "Stade Briochin", "Sete", "Chambly", "Luzenac", "Arles-Avignon", "Istres", "Gueugnon", "Libourne", "Vannes", "Evian", "Gazelec Ajaccio", "Tours FC", "Laval MFC", "Le Puy", "Sète 34", "Lyon-Duchère", "Drancy", "Entente SSG", "Les Herbiers", "Consolat Marseille", "Belfort", "Colmar", "Luçon", "Fréjus Saint-Raphaël", "Carquefou", "Uzès Pont du Gard", "Cherbourg", "Quevilly-Rouen", "Rouen FC", "Beauvais", "Pacy-sur-Eure", "Plabennec", "Rodez AF", "Cannes", "Cassis Carnoux", "Croix de Savoie", "Pau Football Club", "Villemomble", "Calais", "Louhans-Cuiseaux", "Raon-l'Étape", "Yzeure", "Montceau", "Châtellerault", "Toulon", "Moulins", "Bayonne Aviron", "Sannois Saint-Gratien", "Wasquehal", "Alès", "Martigues FC", "Angoulême", "La Roche-sur-Yon", "Lusitanos Saint-Maur", "Poissy", "Sainte-Geneviève", "Fleury", "Bobigny", "Haguenau", "Schiltigheim", "Biesheim", "Colomiers", "Bergerac", "Trélissac", "Anglet", "Canet Roussillon", "Blagnac", "Castanet", "Onet-le-Château", "Alberes Argeles", "Balma", "Agde", "Beziers", "Sete FC", "Aubagne", "Hyères", "Grasse", "Fréjus", "Saint-Priest", "Jura Sud", "Louhans", "Gueugnon FC", "Montceau FC", "Bourgoin-Jallieu", "Rumilly-Vallières", "Thonon Évian", "Chambéry", "Aix FC", "Hauts Lyonnais", "Limonest", "Vaulx-en-Velin", "Ain Sud", "Chassieu Décines", "Espaly", "Feurs", "Valence", "Montélimar", "Rhône Vallées", "Cluses-Scionzier", "Sallanches", "Passy", "Bonneville", "Saint-Julien", "Annemasse", "Gaillard", "Ville-la-Grand", "Ambilly", "Vétraz-Monthoux", "Cranves-Sales", "Douvaine", "Thonon", "Evian TG", "Publier", "Neuvecelle", "Maxilly", "Lugrin", "Meillerie", "Saint-Gingolph", "Abondance", "La Chapelle d'Abondance", "Châtel", "Morzine", "Les Gets", "Taninges", "Mieussy", "Viuz-en-Sallaz", "Saint-Jeoire", "Onnion", "Bogève", "Habère-Lullin", "Habère-Poche", "Bellevaux", "Lullin", "Vailly", "Reyvroz", "Lyaud", "Armoy", "Allinges", "Orcier", "Draillant", "Perrignier", "Cervens", "Fessy", "Lully", "Bons-en-Chablais", "Brenthonne", "Sciez", "Excenevex", "Yvoire", "Messery", "Nernier", "Chens-sur-Léman", "Veigy-Foncenex", "Loisin", "Ballaison", "Massongy", "Douvaine FC"]
   },
+
+
   EREDIVISIE: {
       name: "Eredivisie", category: 'europe', code: 'nl', sport: 'football',
       teams: ["Ajax", "PSV", "Feyenoord", "AZ Alkmaar", "Twente", "Utrecht", "Sparta Rotterdam", "Go Ahead Eagles", "NEC Nijmegen", "Heerenveen"]
@@ -1104,7 +1126,7 @@ class MockSocket {
                 minute: parseInt(newTime) || 0,
                 type: 'goal',
                 team: isHome ? 'home' : 'away',
-                player: { name: isHome ? 'Joueur H' : 'Joueur A', photo: getPlayerPhoto(Date.now()) },
+                player: { name: PLAYER_NAMES[Math.floor(Math.random() * PLAYER_NAMES.length)], photo: getPlayerPhoto(Date.now()) },
                 detail: detail
             }];
         }
@@ -1153,7 +1175,7 @@ const generateEvents = (homeScore: number, awayScore: number, sport: string): Ma
       minute: Math.floor(Math.random() * 90) + 1, 
       type, 
       team: isHome ? 'home' : 'away',
-      player: { name: `Joueur ${isHome ? 'H' : 'A'}`, photo: getPlayerPhoto(i) },
+      player: { name: PLAYER_NAMES[Math.floor(Math.random() * PLAYER_NAMES.length)], photo: getPlayerPhoto(i) },
       detail
     });
   }
@@ -1188,14 +1210,30 @@ const getStatsBySport = (sport: string): MatchStats => {
 let userCountryCode = 'cm'; // Default to Cameroon
 const detectUserLocation = async () => {
     try {
+        // Try first service: ipapi.co
         const res = await fetch('https://ipapi.co/json/');
-        const data = await res.json();
-        if (data.country_code) {
-            userCountryCode = data.country_code.toLowerCase();
-            console.log("User location detected:", userCountryCode);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.country_code) {
+                userCountryCode = data.country_code.toLowerCase();
+                console.log("User location detected (ipapi):", userCountryCode);
+                return;
+            }
+        }
+        
+        // Try second service: ip-api.com (fallback)
+        const res2 = await fetch('http://ip-api.com/json/'); // Note: http because some free tiers block https
+        if (res2.ok) {
+            const data2 = await res2.json();
+            if (data2.countryCode) {
+                userCountryCode = data2.countryCode.toLowerCase();
+                console.log("User location detected (ip-api):", userCountryCode);
+                return;
+            }
         }
     } catch (e) {
-        console.error("Location detection failed, using default:", userCountryCode);
+        // Silent fallback to default 'cm' to avoid cluttering console with errors
+        console.log("Using default location:", userCountryCode);
     }
 };
 detectUserLocation();
@@ -1211,10 +1249,20 @@ const initializeMatches = (): Match[] => {
     const baseDate = new Date();
     baseDate.setDate(baseDate.getDate() + dayOffset);
     
-    // Use ALL leagues to generate ~2400+ matches
-    Object.values(LEAGUES).forEach(leagueData => {
-        // Generate between 15 and 35 matches per league per day to reach ~2400 total
-        const matchCount = Math.floor(Math.random() * 20) + 15; 
+    // Use ALL leagues to generate matches with specific distribution
+    Object.entries(LEAGUES).forEach(([leagueKey, leagueData]) => {
+        let matchCount = 15;
+        
+        if (leagueKey === 'UCL') {
+            // Champions League: Many matches
+            matchCount = 40 + Math.floor(Math.random() * 20);
+        } else if (leagueData.category === 'africa') {
+            // African Leagues: Exactly 20 matches total across 7 days (~3 per day)
+            matchCount = 3; 
+        } else {
+            // Others: Standard
+            matchCount = 10 + Math.floor(Math.random() * 10);
+        }
         
         for(let i=0; i<matchCount; i++) {
             const homeIdx = Math.floor(Math.random() * leagueData.teams.length);
@@ -1453,7 +1501,7 @@ export const fetchStandings = async (leagueName: string): Promise<Standing[]> =>
     
     const standings: Standing[] = teams.map((teamName, i) => {
         const played = 25;
-        const win = Math.floor(Math.random() * 20);
+        const win = Math.floor(Math.random() * 15) + (teams.length - i); // Bias towards top teams
         const lose = Math.floor(Math.random() * (played - win));
         const draw = played - win - lose;
         const points = (win * 3) + draw;
@@ -1465,7 +1513,7 @@ export const fetchStandings = async (leagueName: string): Promise<Standing[]> =>
             rank: 0, // Assigned after sort
             team: { id: i, name: teamName, logo: getLogo(teamName, teamCode) },
             points,
-            goalsDiff: Math.floor(Math.random() * 40) - 10,
+            goalsDiff: Math.floor(Math.random() * 40) - 10 + (win * 2),
             form: "WWLDL".split('').sort(() => 0.5 - Math.random()).join(''),
             played,
             win,
@@ -1474,28 +1522,42 @@ export const fetchStandings = async (leagueName: string): Promise<Standing[]> =>
         };
     }).sort((a, b) => b.points - a.points);
 
+    // Ensure unique ranks even if points are same
     return standings.map((s, i) => ({ ...s, rank: i + 1 }));
 };
 
 const generateLineup = (teamName: string, code?: string): Lineup => {
-    const formation = "4-3-3";
+    const formations = ["4-3-3", "4-4-2", "3-5-2", "5-3-2", "4-2-3-1", "4-1-4-1", "3-4-3"];
+    const formation = formations[Math.floor(Math.random() * formations.length)];
     const startXI: LineupPlayer[] = [];
     const substitutes: LineupPlayer[] = [];
     
+    // Parse formation to get counts
+    const parts = formation.split('-').map(Number);
+    let idCounter = 1;
+
     // Goalkeeper
-    startXI.push({ id: 1, name: "Gardien", number: 1, pos: "G" });
+    startXI.push({ id: idCounter++, name: PLAYER_NAMES[Math.floor(Math.random() * PLAYER_NAMES.length)], number: 1, pos: "G" });
     
     // Defenders
-    for(let i=0; i<4; i++) startXI.push({ id: 2+i, name: `Def ${i+1}`, number: 2+i, pos: "D" });
+    const defCount = parts[0] || 4;
+    for(let i=0; i<defCount; i++) startXI.push({ id: idCounter++, name: PLAYER_NAMES[Math.floor(Math.random() * PLAYER_NAMES.length)], number: idCounter, pos: "D" });
     
     // Midfielders
-    for(let i=0; i<3; i++) startXI.push({ id: 6+i, name: `Mil ${i+1}`, number: 6+i, pos: "M" });
+    const midCount = parts[1] || 3;
+    for(let i=0; i<midCount; i++) startXI.push({ id: idCounter++, name: PLAYER_NAMES[Math.floor(Math.random() * PLAYER_NAMES.length)], number: idCounter, pos: "M" });
     
     // Forwards
-    for(let i=0; i<3; i++) startXI.push({ id: 9+i, name: `Att ${i+1}`, number: 9+i, pos: "F" });
+    const fwdCount = parts[2] || 3;
+    for(let i=0; i<fwdCount; i++) startXI.push({ id: idCounter++, name: PLAYER_NAMES[Math.floor(Math.random() * PLAYER_NAMES.length)], number: idCounter, pos: "F" });
+
+    // Ensure we have 11 players if formation parsing was weird
+    while(startXI.length < 11) {
+        startXI.push({ id: idCounter++, name: PLAYER_NAMES[Math.floor(Math.random() * PLAYER_NAMES.length)], number: idCounter, pos: "M" });
+    }
 
     // Subs
-    for(let i=0; i<5; i++) substitutes.push({ id: 20+i, name: `Sub ${i+1}`, number: 12+i, pos: "Sub" });
+    for(let i=0; i<7; i++) substitutes.push({ id: 20+i, name: PLAYER_NAMES[Math.floor(Math.random() * PLAYER_NAMES.length)], number: 12+i, pos: "Sub" });
 
     return {
         team: { id: 0, name: teamName, logo: getLogo(teamName, code) },

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Match, BetSlipItem } from '../types';
-import { Activity, CalendarClock, Star, BrainCircuit, Lock, ChevronDown } from 'lucide-react';
+import { Activity, CalendarClock, Star, BrainCircuit, Lock, ChevronDown, Zap } from 'lucide-react';
 import { getFlag, toggleMatchFavorite } from '../services/sportApiService';
 import { analyzeMatch } from '../services/geminiService';
 
@@ -30,14 +30,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
   };
 
   const isMatchLocked = () => {
-    if (match.status !== 'live') return false;
-    if (match.sport === 'football' || match.sport === 'rugby') {
-      const timeVal = parseInt(match.time.replace("'", ""));
-      if (!isNaN(timeVal) && timeVal >= 85) {
-        const idNum = parseInt(match.id.replace(/\D/g, '')) || 0;
-        return idNum % 2 === 0;
-      }
-    }
     return false;
   };
 
@@ -69,7 +61,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
           <span className="text-xs font-bold text-slate-300 uppercase truncate max-w-[150px] flex items-center gap-1">
             {match.countryCode && (
               getFlag(match.countryCode).startsWith('http') 
-              ? <img src={getFlag(match.countryCode)} className="w-4 h-3 object-cover rounded-sm" alt="flag" />
+              ? <img src={getFlag(match.countryCode)} className="w-4 h-3 object-cover rounded-sm" alt="flag" referrerPolicy="no-referrer" />
               : <span>{getFlag(match.countryCode)}</span>
             )}
             {match.league}
@@ -89,12 +81,12 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
           <div className="flex flex-col items-center flex-1">
             <div className="relative group/team">
               <div className="w-14 h-14 rounded-full bg-brand-700 p-1 border border-brand-600 flex items-center justify-center shadow-lg group-hover/team:scale-105 transition-transform">
-                <img src={match.homeLogo} alt={match.homeTeam} className="w-full h-full rounded-full object-cover" />
+                <img src={match.homeLogo} alt={match.homeTeam} className="w-full h-full rounded-full object-cover" referrerPolicy="no-referrer" />
               </div>
               {match.homeCountryCode && !match.homeLogo?.includes('flagcdn.com') && (
                 <div className="absolute -bottom-1 -right-1 shadow-md">
                   {getFlag(match.homeCountryCode).startsWith('http') 
-                    ? <img src={getFlag(match.homeCountryCode)} className="w-5 h-3.5 object-cover rounded-sm border border-brand-900" alt="flag" />
+                    ? <img src={getFlag(match.homeCountryCode)} className="w-5 h-3.5 object-cover rounded-sm border border-brand-900" alt="flag" referrerPolicy="no-referrer" />
                     : <span className="bg-brand-900 rounded-full px-1 text-[8px]">{getFlag(match.homeCountryCode)}</span>
                   }
                 </div>
@@ -115,12 +107,12 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
           <div className="flex flex-col items-center flex-1">
             <div className="relative group/team">
               <div className="w-14 h-14 rounded-full bg-brand-700 p-1 border border-brand-600 flex items-center justify-center shadow-lg group-hover/team:scale-105 transition-transform">
-                <img src={match.awayLogo} alt={match.awayTeam} className="w-full h-full rounded-full object-cover" />
+                <img src={match.awayLogo} alt={match.awayTeam} className="w-full h-full rounded-full object-cover" referrerPolicy="no-referrer" />
               </div>
               {match.awayCountryCode && !match.awayLogo?.includes('flagcdn.com') && (
                 <div className="absolute -bottom-1 -right-1 shadow-md">
                   {getFlag(match.awayCountryCode).startsWith('http') 
-                    ? <img src={getFlag(match.awayCountryCode)} className="w-5 h-3.5 object-cover rounded-sm border border-brand-900" alt="flag" />
+                    ? <img src={getFlag(match.awayCountryCode)} className="w-5 h-3.5 object-cover rounded-sm border border-brand-900" alt="flag" referrerPolicy="no-referrer" />
                     : <span className="bg-brand-900 rounded-full px-1 text-[8px]">{getFlag(match.awayCountryCode)}</span>
                   }
                 </div>

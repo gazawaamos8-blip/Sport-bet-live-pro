@@ -244,7 +244,7 @@ const LiveChat: React.FC<LiveChatProps> = ({ isOpen, onClose }) => {
                     {/* Attachments */}
                     {msg.attachment && (
                         <div className="mb-2 rounded-lg overflow-hidden border border-black/10">
-                            {msg.attachment.type === 'image' && <img src={msg.attachment.url} alt="att" className="max-w-full h-auto" />}
+                            {msg.attachment.type === 'image' && <img src={msg.attachment.url} alt="att" className="max-w-full h-auto" referrerPolicy="no-referrer" />}
                             {msg.attachment.type === 'video' && <video src={msg.attachment.url} controls className="max-w-full h-auto" />}
                             {msg.attachment.type === 'file' && (
                                 <div className="flex items-center gap-2 p-2 bg-black/20">
