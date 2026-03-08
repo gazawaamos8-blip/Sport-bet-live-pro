@@ -7,8 +7,19 @@ const DB_KEYS = {
   BETS: 'db_bets_v1',
   TRANSACTIONS: 'db_transactions_v1',
   SETTINGS: 'db_settings_v1',
-  COUPONS: 'db_coupons_v1'
+  COUPONS: 'db_coupons_v1',
+  NOTIFICATIONS: 'db_notifications_v1'
 };
+
+export interface Notification {
+  id: string;
+  type: 'match' | 'wallet' | 'promo' | 'system';
+  title: string;
+  text: string;
+  time: string;
+  read: boolean;
+  date: string;
+}
 
 export interface Transaction {
   id: string;
@@ -20,34 +31,48 @@ export interface Transaction {
 }
 
 type BalanceListener = (newBalance: number) => void;
+type NotificationListener = (notifs: Notification[]) => void;
 
 // Centralized Database Service with Real-time Subscriptions
 class Database {
   private balanceListeners: BalanceListener[] = [];
+  private notificationListeners: NotificationListener[] = [];
   
   constructor() {
     this.init();
   }
 
   private init() {
-    if (!localStorage.getItem(DB_KEYS.BETS)) {
-      localStorage.setItem(DB_KEYS.BETS, JSON.stringify(MOCK_HISTORY));
-    }
-    if (!localStorage.getItem(DB_KEYS.TRANSACTIONS)) {
-      localStorage.setItem(DB_KEYS.TRANSACTIONS, JSON.stringify([]));
-    }
-    // Init Coupons with example
-    if (!localStorage.getItem(DB_KEYS.COUPONS)) {
-        const demoCoupon: SavedCoupon = {
-            code: 'AMOZ23',
-            date: new Date().toISOString(),
-            totalOdds: 12.5,
-            items: [
-                { matchId: 'm1', selection: 'home', odds: 1.45, matchInfo: 'Man City vs Liverpool', sport: 'football' },
-                { matchId: 'm2', selection: 'home', odds: 2.10, matchInfo: 'Real Madrid vs Barcelona', sport: 'football' }
-            ]
-        };
-        localStorage.setItem(DB_KEYS.COUPONS, JSON.stringify([demoCoupon]));
+    try {
+      if (!localStorage.getItem(DB_KEYS.BETS)) {
+        localStorage.setItem(DB_KEYS.BETS, JSON.stringify(MOCK_HISTORY));
+      }
+      if (!localStorage.getItem(DB_KEYS.TRANSACTIONS)) {
+        localStorage.setItem(DB_KEYS.TRANSACTIONS, JSON.stringify([]));
+      }
+      if (!localStorage.getItem(DB_KEYS.NOTIFICATIONS)) {
+        const initialNotifs: Notification[] = [
+          { id: 'n1', type: 'match', title: 'Match en direct', text: "Manchester City vs Liverpool commence dans 15 min !", time: 'Il y a 2 min', read: false, date: new Date().toISOString() },
+          { id: 'n2', type: 'wallet', title: 'Dépôt réussi', text: "Votre dépôt de 5,000 F a été confirmé.", time: 'Il y a 1h', read: true, date: new Date().toISOString() },
+          { id: 'n3', type: 'promo', title: 'Bonus du jour', text: "Bonus du jour disponible : Réclamez maintenant !", time: 'Il y a 3h', read: false, date: new Date().toISOString() }
+        ];
+        localStorage.setItem(DB_KEYS.NOTIFICATIONS, JSON.stringify(initialNotifs));
+      }
+      // Init Coupons with example
+      if (!localStorage.getItem(DB_KEYS.COUPONS)) {
+          const demoCoupon: SavedCoupon = {
+              code: 'AMOZ23',
+              date: new Date().toISOString(),
+              totalOdds: 12.5,
+              items: [
+                  { matchId: 'm1', selection: 'home', odds: 1.45, matchInfo: 'Man City vs Liverpool', sport: 'football' },
+                  { matchId: 'm2', selection: 'home', odds: 2.10, matchInfo: 'Real Madrid vs Barcelona', sport: 'football' }
+              ]
+          };
+          localStorage.setItem(DB_KEYS.COUPONS, JSON.stringify([demoCoupon]));
+      }
+    } catch (e) {
+      console.warn("LocalStorage is not available:", e);
     }
   }
 
@@ -83,19 +108,31 @@ class Database {
   // --- USER & BALANCE ---
 
   getUser(): User | null {
-    const data = localStorage.getItem(DB_KEYS.USER);
-    return data ? JSON.parse(data) : null;
+    try {
+      const data = localStorage.getItem(DB_KEYS.USER);
+      return data ? JSON.parse(data) : null;
+    } catch (e) {
+      return null;
+    }
   }
 
   saveUser(user: User): User {
-    localStorage.setItem(DB_KEYS.USER, JSON.stringify(user));
+    try {
+      localStorage.setItem(DB_KEYS.USER, JSON.stringify(user));
+    } catch (e) {
+      console.error("Failed to save user:", e);
+    }
     this.notifyBalanceChange(); // Update entire app
     return user;
   }
 
   getBalance(): number {
-    const user = this.getUser();
-    return user ? user.balance : 0;
+    try {
+      const user = this.getUser();
+      return user ? user.balance : 0;
+    } catch (e) {
+      return 0;
+    }
   }
 
   // Universal method to change balance (Used by Casino, Bets, Wallet)
@@ -154,8 +191,12 @@ class Database {
   }
 
   getTransactions(): Transaction[] {
-    const data = localStorage.getItem(DB_KEYS.TRANSACTIONS);
-    return data ? JSON.parse(data) : [];
+    try {
+      const data = localStorage.getItem(DB_KEYS.TRANSACTIONS);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
   }
 
   // --- BETS (Sports) ---
@@ -178,8 +219,12 @@ class Database {
   }
 
   getBets(): PlacedBet[] {
-    const data = localStorage.getItem(DB_KEYS.BETS);
-    return data ? JSON.parse(data) : [];
+    try {
+      const data = localStorage.getItem(DB_KEYS.BETS);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
   }
 
   updateBetStatus(betId: string, status: 'won' | 'lost', winningAmount: number = 0) {
@@ -231,8 +276,88 @@ class Database {
   }
 
   getCoupons(): SavedCoupon[] {
+    try {
       const data = localStorage.getItem(DB_KEYS.COUPONS);
       return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async cashOutBet(betId: string, amount: number) {
+    const bets = this.getBets();
+    let updated = false;
+    const updatedBets = bets.map(b => {
+      if (b.id === betId && b.status === 'pending') {
+        updated = true;
+        return { ...b, status: 'cashed_out' as const };
+      }
+      return b;
+    });
+
+    if (updated) {
+      localStorage.setItem(DB_KEYS.BETS, JSON.stringify(updatedBets));
+      await this.addTransaction({
+        type: 'bet_win',
+        amount: amount,
+        status: 'success',
+        provider: 'SportBot CashOut'
+      });
+    }
+  }
+
+  // --- NOTIFICATIONS ---
+
+  subscribeToNotifications(listener: NotificationListener) {
+    this.notificationListeners.push(listener);
+    listener(this.getNotifications());
+    return () => {
+      this.notificationListeners = this.notificationListeners.filter(l => l !== listener);
+    };
+  }
+
+  private notifyNotificationsChange() {
+    const notifs = this.getNotifications();
+    this.notificationListeners.forEach(l => l(notifs));
+  }
+
+  getNotifications(): Notification[] {
+    try {
+      const data = localStorage.getItem(DB_KEYS.NOTIFICATIONS);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  markAllNotificationsAsRead() {
+    const notifs = this.getNotifications().map(n => ({ ...n, read: true }));
+    localStorage.setItem(DB_KEYS.NOTIFICATIONS, JSON.stringify(notifs));
+    this.notifyNotificationsChange();
+  }
+
+  markNotificationAsRead(id: string) {
+    const notifs = this.getNotifications().map(n => n.id === id ? { ...n, read: true } : n);
+    localStorage.setItem(DB_KEYS.NOTIFICATIONS, JSON.stringify(notifs));
+    this.notifyNotificationsChange();
+  }
+
+  clearNotifications() {
+    localStorage.setItem(DB_KEYS.NOTIFICATIONS, JSON.stringify([]));
+    this.notifyNotificationsChange();
+  }
+
+  addNotification(notif: Omit<Notification, 'id' | 'date' | 'read' | 'time'>) {
+    const newNotif: Notification = {
+      ...notif,
+      id: `NOTIF-${Date.now()}`,
+      date: new Date().toISOString(),
+      read: false,
+      time: 'À l\'instant'
+    };
+    const notifs = [newNotif, ...this.getNotifications()];
+    localStorage.setItem(DB_KEYS.NOTIFICATIONS, JSON.stringify(notifs));
+    this.notifyNotificationsChange();
   }
 
   logout() {

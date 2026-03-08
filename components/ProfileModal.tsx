@@ -1,6 +1,7 @@
 import React from 'react';
 import { User, AppSection } from '../types';
 import { X, User as UserIcon, Phone, ShieldCheck, LogOut, ChevronRight, CreditCard, Settings, HelpCircle, Copy, Clock } from 'lucide-react';
+import { db } from '../services/database';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -14,7 +15,21 @@ interface ProfileModalProps {
 }
 
 const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onLogout, onOpenWallet, onOpenSettings, onOpenSupport, onNavigate }) => {
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [newName, setNewName] = React.useState(user.name);
+
   if (!isOpen) return null;
+
+  const handleSaveName = () => {
+      if (newName.trim()) {
+          const updatedUser = { ...user, name: newName };
+          // This would normally be handled by a prop or context
+          // For now we'll use the db directly and hope the parent re-renders
+          db.saveUser(updatedUser);
+          setIsEditing(false);
+          window.location.reload(); // Simple way to refresh state across app
+      }
+  };
 
   const accountId = `ID-${user.phone.substring(5)}${user.name.length}`;
 
@@ -50,8 +65,31 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onLo
                  {user.name.substring(0, 2)}
               </div>
            </div>
-           <h3 className="text-xl font-bold text-white mb-1">{user.name}</h3>
-           <div className="flex items-center gap-2 bg-brand-800 px-3 py-1 rounded-full border border-brand-700">
+         {isEditing ? (
+             <div className="flex flex-col items-center gap-2 w-full px-10">
+                 <input 
+                     type="text" 
+                     value={newName} 
+                     onChange={(e) => setNewName(e.target.value)}
+                     className="w-full bg-brand-900 border border-brand-accent rounded-lg px-3 py-2 text-white text-center font-bold focus:outline-none"
+                     autoFocus
+                 />
+                 <div className="flex gap-2 w-full">
+                     <button onClick={handleSaveName} className="flex-1 bg-brand-accent text-brand-900 font-bold py-1 rounded-md text-xs">Enregistrer</button>
+                     <button onClick={() => setIsEditing(false)} className="flex-1 bg-brand-800 text-slate-400 font-bold py-1 rounded-md text-xs border border-brand-700">Annuler</button>
+                 </div>
+             </div>
+         ) : (
+             <div className="flex flex-col items-center">
+                 <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
+                     {user.name}
+                     <button onClick={() => setIsEditing(true)} className="p-1 text-slate-500 hover:text-brand-accent transition-colors">
+                         <Settings size={14} />
+                     </button>
+                 </h3>
+             </div>
+         )}
+         <div className="flex items-center gap-2 bg-brand-800 px-3 py-1 rounded-full border border-brand-700 mt-2">
               <span className="text-xs text-slate-400">ID: <span className="text-white font-mono">{accountId}</span></span>
               <Copy size={12} className="text-slate-500 cursor-pointer hover:text-white" />
            </div>

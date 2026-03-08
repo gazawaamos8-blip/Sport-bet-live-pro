@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Globe, Bell, Check, Moon, Sun, ShieldCheck, Fingerprint } from 'lucide-react';
+import { X, Globe, Bell, Check, Moon, Sun, ShieldCheck, Fingerprint, Smartphone, Lock } from 'lucide-react';
 import { setAppLanguage, getAppLanguage, t, Language } from '../services/localization';
 import { db } from '../services/database';
 
@@ -13,6 +13,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpdate
   const [language, setLanguage] = useState<Language>(getAppLanguage());
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [vpnEnabled, setVpnEnabled] = useState(false);
+  const [mtnSimEnabled, setMtnSimEnabled] = useState(false);
+  const [vpnApiKey, setVpnApiKey] = useState('VPN-SPORTBET-2026-DEFAULT');
   const [notifs, setNotifs] = useState({
     push: true,
     sms: false,
@@ -28,6 +31,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpdate
     if (user) {
         setBiometricEnabled(user.isBiometricEnabled);
         if (user.notifications) setNotifs(user.notifications);
+        // Load VPN settings from localStorage
+        setVpnEnabled(localStorage.getItem('vpn_enabled') === 'true');
+        setMtnSimEnabled(localStorage.getItem('mtn_sim_enabled') === 'true');
+        const savedKey = localStorage.getItem('vpn_api_key');
+        if (savedKey) setVpnApiKey(savedKey);
     }
   }, [isOpen]);
 
@@ -60,6 +68,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpdate
           user.isBiometricEnabled = biometricEnabled;
           user.notifications = notifs;
           db.saveUser(user);
+          
+          // Save VPN settings
+          localStorage.setItem('vpn_enabled', vpnEnabled.toString());
+          localStorage.setItem('mtn_sim_enabled', mtnSimEnabled.toString());
+          localStorage.setItem('vpn_api_key', vpnApiKey);
+
           alert("Paramètres sauvegardés avec succès !");
       }
       onClose();
@@ -152,6 +166,59 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpdate
                         >
                             <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${biometricEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="h-px bg-brand-800"></div>
+
+            {/* VPN & MTN (Offline Access) */}
+            <div>
+                <h4 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
+                    <Globe size={16} /> Accès Hors-Ligne (VPN/MTN)
+                </h4>
+                <div className="space-y-4 bg-brand-800 rounded-xl p-4 border border-brand-700">
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <Lock size={20} className={vpnEnabled ? "text-blue-500" : "text-slate-500"} />
+                            <div className="flex flex-col">
+                                <span className="text-sm text-white font-medium">VPN Illimité</span>
+                                <span className="text-[10px] text-slate-500">Navigation sans frais de données</span>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setVpnEnabled(!vpnEnabled)}
+                            className={`w-12 h-6 rounded-full p-1 transition-colors ${vpnEnabled ? 'bg-blue-500' : 'bg-brand-900'}`}
+                        >
+                            <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${vpnEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                        </button>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <Smartphone size={20} className={mtnSimEnabled ? "text-yellow-500" : "text-slate-500"} />
+                            <div className="flex flex-col">
+                                <span className="text-sm text-white font-medium">Optimisation SIM MTN</span>
+                                <span className="text-[10px] text-slate-500">Accès prioritaire réseau MTN</span>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setMtnSimEnabled(!mtnSimEnabled)}
+                            className={`w-12 h-6 rounded-full p-1 transition-colors ${mtnSimEnabled ? 'bg-yellow-500' : 'bg-brand-900'}`}
+                        >
+                            <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${mtnSimEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                        </button>
+                    </div>
+
+                    <div className="pt-2">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase mb-1 block">Clé API VPN (Par défaut)</label>
+                        <input 
+                            type="text"
+                            value={vpnApiKey}
+                            onChange={(e) => setVpnApiKey(e.target.value)}
+                            className="w-full bg-brand-900 border border-brand-700 rounded-lg p-2 text-xs text-white font-mono focus:border-blue-500 outline-none"
+                            placeholder="Entrez votre clé VPN..."
+                        />
                     </div>
                 </div>
             </div>

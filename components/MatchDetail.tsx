@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Match, MatchEvent, Lineup, LineupPlayer, SportType } from '../types';
+import { Match, MatchEvent, Lineup, LineupPlayer, SportType, BetSlipItem } from '../types';
 import { fetchLineups, fetchH2H, getFlag } from '../services/sportApiService';
 import { analyzeMatch } from '../services/geminiService';
-import { X, Trophy, Activity, Camera, Timer, User as UserIcon, Sparkles, Users, History, BrainCircuit, Shirt } from 'lucide-react';
+import { X, Trophy, Activity, Camera, Timer, User as UserIcon, Sparkles, Users, History, BrainCircuit, Shirt, Zap, Lock } from 'lucide-react';
 import MatchTracker from './MatchTracker';
 
 interface MatchDetailProps {
   match: Match;
   onClose: () => void;
+  onAddToSlip?: (item: BetSlipItem) => void;
 }
 
 const StatBar: React.FC<{ label: string, home: number, away: number, total?: number }> = ({ label, home, away, total }) => {
@@ -75,11 +76,49 @@ const LineupView: React.FC<{ lineup: Lineup, color: string }> = ({ lineup, color
     </div>
 );
 
-const MatchDetail: React.FC<MatchDetailProps> = ({ match, onClose }) => {
-  const [activeTab, setActiveTab] = useState<'timeline' | 'stats' | 'lineups' | 'ai' | 'tips' | 'h2h'>('timeline');
+const MatchDetail: React.FC<MatchDetailProps> = ({ match, onClose, onAddToSlip }) => {
+  const [activeTab, setActiveTab] = useState<'timeline' | 'stats' | 'lineups' | 'ai' | 'tips' | 'h2h' | 'odds'>('odds');
   const [lineups, setLineups] = useState<{ home: Lineup; away: Lineup } | null>(null);
   const [h2h, setH2h] = useState<Match[]>([]);
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
+
+  const isMatchLocked = () => {
+    if (match.status === 'finished') return true;
+    if (match.status === 'upcoming') return false;
+    const matchMinute = parseInt(match.time.replace("'", ""));
+    const isNearEnd = !isNaN(matchMinute) && matchMinute >= 85;
+
+    // 0-0 near end -> Lock match
+    if (isNearEnd && match.homeScore === 0 && match.awayScore === 0) return true;
+
+    // 1-0 or 0-1 near end -> Lock match (Dominating lead near end)
+    if (isNearEnd && ((match.homeScore === 1 && match.awayScore === 0) || (match.homeScore === 0 && match.awayScore === 1))) return true;
+
+    const scoreDiff = Math.abs(match.homeScore - match.awayScore);
+    const hasBigLead = scoreDiff >= 2;
+    return hasBigLead;
+  };
+
+  const isSelectionLocked = (selection: string) => {
+    if (isMatchLocked()) return true;
+
+    const matchMinute = parseInt(match.time.replace("'", ""));
+    const isNearEnd = !isNaN(matchMinute) && matchMinute >= 85;
+
+    if (isNearEnd) {
+        // 1-0 or 1-2 (one goal lead) near end -> Lock leading team
+        if (match.homeScore === 1 && match.awayScore === 0 && selection === 'home') return true;
+        if (match.homeScore === 0 && match.awayScore === 1 && selection === 'away') return true;
+        if (match.homeScore === 1 && match.awayScore === 2 && selection === 'away') return true;
+        if (match.homeScore === 2 && match.awayScore === 1 && selection === 'home') return true;
+        
+        // Double chance locking
+        if (match.homeScore === 1 && match.awayScore === 0 && (selection === 'homeDraw' || selection === 'homeAway')) return true;
+        if (match.homeScore === 0 && match.awayScore === 1 && (selection === 'drawAway' || selection === 'homeAway')) return true;
+    }
+
+    return false;
+  };
 
   useEffect(() => {
       fetchLineups(match.id).then(setLineups);
@@ -161,12 +200,13 @@ const MatchDetail: React.FC<MatchDetailProps> = ({ match, onClose }) => {
         {/* Tabs */}
         <div className="flex px-4 gap-2 overflow-x-auto no-scrollbar pb-2">
             {[
+                { id: 'odds', label: 'Paris', icon: Trophy },
                 { id: 'timeline', label: 'Live', icon: Timer },
                 { id: 'stats', label: 'Stats', icon: Activity },
                 { id: 'lineups', label: 'Joueurs', icon: Shirt },
                 { id: 'h2h', label: 'H2H', icon: History },
                 { id: 'ai', label: 'Gemini AI', icon: BrainCircuit },
-                { id: 'tips', label: 'Tips Pro', icon: Trophy },
+                { id: 'tips', label: 'Conseils', icon: Trophy },
             ].map(tab => (
                 <button
                     key={tab.id}
@@ -180,6 +220,107 @@ const MatchDetail: React.FC<MatchDetailProps> = ({ match, onClose }) => {
       </div>
 
       <div className="p-4 max-w-2xl mx-auto w-full pb-10">
+         {activeTab === 'odds' && (
+             <div className="space-y-6 animate-fade-in relative">
+                 {isMatchLocked() && (
+                     <div className="absolute inset-0 z-10 bg-brand-900/60 backdrop-blur-[2px] rounded-2xl flex items-center justify-center">
+                         <div className="bg-brand-900/90 border border-brand-700 p-6 rounded-2xl flex flex-col items-center gap-3 shadow-2xl">
+                             <Lock size={40} className="text-slate-500" />
+                             <span className="text-sm font-black text-white uppercase tracking-widest">Paris Verrouillés</span>
+                             <p className="text-[10px] text-slate-400 text-center max-w-[150px]">Le match est trop avancé ou le score est définitif.</p>
+                         </div>
+                     </div>
+                 )}
+                 <div className="bg-brand-800 rounded-2xl p-5 border border-brand-700 shadow-xl">
+                     <h4 className="text-white font-black uppercase italic mb-4 flex items-center gap-2">
+                         <Trophy size={18} className="text-brand-accent" /> Résultat Final (1X2)
+                     </h4>
+                     <div className="grid grid-cols-3 gap-3">
+                         {[
+                             { l: '1', v: match.odds.home, s: 'home' },
+                             { l: 'X', v: match.odds.draw, s: 'draw' },
+                             { l: '2', v: match.odds.away, s: 'away' }
+                         ].map((opt, idx) => (
+                             <button 
+                                 key={idx}
+                                 onClick={() => !isSelectionLocked(opt.s) && onAddToSlip?.({
+                                     matchId: match.id,
+                                     selection: opt.s as any,
+                                     odds: opt.v,
+                                     matchInfo: `${match.homeTeam} vs ${match.awayTeam}`,
+                                     league: match.league,
+                                     sport: match.sport,
+                                     countryCode: match.countryCode,
+                                     homeCountryCode: match.homeCountryCode,
+                                     awayCountryCode: match.awayCountryCode
+                                 })}
+                                 className={`flex flex-col items-center bg-brand-900 hover:bg-brand-700 py-4 rounded-2xl border border-brand-700 transition-all hover:border-brand-accent active:scale-95 group ${isSelectionLocked(opt.s) ? 'opacity-30 cursor-not-allowed' : ''}`}
+                             >
+                                 <div className="flex items-center gap-1">
+                                    <span className="text-[10px] text-slate-500 font-bold group-hover:text-brand-accent uppercase mb-1">{opt.l}</span>
+                                    {isSelectionLocked(opt.s) && !isMatchLocked() && <Lock size={10} className="text-slate-500 mb-1" />}
+                                 </div>
+                                 <span className="text-lg font-black text-white">{opt.v.toFixed(2)}</span>
+                             </button>
+                         ))}
+                     </div>
+                 </div>
+
+                 {match.doubleChance && (
+                     <div className="bg-brand-800 rounded-2xl p-5 border border-brand-700 shadow-xl">
+                         <h4 className="text-white font-black uppercase italic mb-4 flex items-center gap-2">
+                             <Zap size={18} className="text-yellow-500" /> Double Chance
+                         </h4>
+                         <div className="grid grid-cols-3 gap-3">
+                             {[
+                                 { l: '1X', v: match.doubleChance.homeDraw, s: 'homeDraw' },
+                                 { l: '12', v: match.doubleChance.homeAway, s: 'homeAway' },
+                                 { l: 'X2', v: match.doubleChance.drawAway, s: 'drawAway' }
+                             ].map((opt, idx) => (
+                                 <button 
+                                     key={idx}
+                                     onClick={() => !isSelectionLocked(opt.s) && onAddToSlip?.({
+                                         matchId: match.id,
+                                         selection: opt.s as any,
+                                         odds: opt.v,
+                                         matchInfo: `${match.homeTeam} vs ${match.awayTeam}`,
+                                         league: match.league,
+                                         sport: match.sport,
+                                         countryCode: match.countryCode,
+                                         homeCountryCode: match.homeCountryCode,
+                                         awayCountryCode: match.awayCountryCode
+                                     })}
+                                     className={`flex flex-col items-center bg-brand-900 hover:bg-brand-700 py-4 rounded-2xl border border-brand-700 transition-all hover:border-brand-accent active:scale-95 group ${isSelectionLocked(opt.s) ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                 >
+                                     <div className="flex items-center gap-1">
+                                        <span className="text-[10px] text-slate-500 font-bold group-hover:text-brand-accent uppercase mb-1">{opt.l}</span>
+                                        {isSelectionLocked(opt.s) && !isMatchLocked() && <Lock size={10} className="text-slate-500 mb-1" />}
+                                     </div>
+                                     <span className="text-lg font-black text-white">{opt.v.toFixed(2)}</span>
+                                 </button>
+                             ))}
+                         </div>
+                     </div>
+                 )}
+
+                 <div className="bg-brand-800 rounded-2xl p-5 border border-brand-700 shadow-xl opacity-50">
+                     <h4 className="text-white font-black uppercase italic mb-4 flex items-center gap-2">
+                         <Activity size={18} className="text-blue-500" /> Plus / Moins (2.5)
+                     </h4>
+                     <div className="grid grid-cols-2 gap-3">
+                         <button className="flex flex-col items-center bg-brand-900 py-4 rounded-2xl border border-brand-700">
+                             <span className="text-[10px] text-slate-500 font-bold uppercase mb-1">Plus de 2.5</span>
+                             <span className="text-lg font-black text-white">1.85</span>
+                         </button>
+                         <button className="flex flex-col items-center bg-brand-900 py-4 rounded-2xl border border-brand-700">
+                             <span className="text-[10px] text-slate-500 font-bold uppercase mb-1">Moins de 2.5</span>
+                             <span className="text-lg font-black text-white">1.95</span>
+                         </button>
+                     </div>
+                 </div>
+             </div>
+         )}
+
          {activeTab === 'timeline' && (
              <div className="space-y-6">
                  {/* Live Match Tracker (Pitch) */}

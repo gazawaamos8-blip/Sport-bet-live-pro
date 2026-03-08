@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Newspaper, Clock, ChevronRight, TrendingUp, Search, Filter, Share2, Bookmark, Plus, X, Image as ImageIcon, Send, Upload } from 'lucide-react';
+import { Newspaper, Clock, ChevronRight, TrendingUp, Search, Filter, Share2, Bookmark, Plus, X, Image as ImageIcon, Send, Upload, Play } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const NEWS_DATA = [
@@ -67,6 +67,8 @@ const NewsHub: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedArticle, setSelectedArticle] = useState<typeof NEWS_DATA[0] | null>(null);
     const [showPublishModal, setShowPublishModal] = useState(false);
+    const [activeMedia, setActiveMedia] = useState<'image' | 'video'>('image');
+    const [isPlaying, setIsPlaying] = useState(false);
     const [publishData, setPublishData] = useState({ 
         title: '', 
         content: '', 
@@ -236,18 +238,23 @@ const NewsHub: React.FC = () => {
                 </div>
             )}
 
-            {/* Newsletter */}
+            {/* Newsletter (Orange Sport Integration) */}
             <div className="bg-gradient-to-br from-brand-800 to-brand-900 border border-brand-700 rounded-2xl p-6 text-center shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-brand-accent"></div>
-                <h3 className="text-white font-black uppercase italic mb-2 text-lg">Restez informé</h3>
-                <p className="text-slate-400 text-xs mb-4">Recevez les meilleures cotes et actus directement par SMS.</p>
-                <div className="flex gap-2">
+                <div className="absolute -right-4 -top-4 opacity-10">
+                    <Newspaper size={120} className="text-white" />
+                </div>
+                <h3 className="text-white font-black uppercase italic mb-2 text-lg flex items-center justify-center gap-2">
+                    <span className="text-brand-accent">Orange</span> Sport Info
+                </h3>
+                <p className="text-slate-400 text-xs mb-4">Recevez les alertes blessures, compos et cotes Orange Sport par SMS.</p>
+                <div className="flex gap-2 relative z-10">
                     <input 
                         type="tel" 
                         placeholder="Votre numéro..." 
                         className="flex-1 bg-brand-900 border border-brand-700 rounded-xl px-4 py-3 text-white text-sm focus:border-brand-accent outline-none"
                     />
-                    <button className="bg-brand-accent text-brand-900 font-black px-6 py-3 rounded-xl text-xs uppercase shadow-lg shadow-brand-accent/20 active:scale-95 transition-transform">OK</button>
+                    <button className="bg-brand-accent text-brand-900 font-black px-6 py-3 rounded-xl text-xs uppercase shadow-lg shadow-brand-accent/20 active:scale-95 transition-transform">S'abonner</button>
                 </div>
             </div>
 
@@ -255,16 +262,75 @@ const NewsHub: React.FC = () => {
             <AnimatePresence>
                 {selectedArticle && (
                     <div className="fixed inset-0 z-[100] flex flex-col bg-brand-900 animate-fade-in">
-                        <div className="relative h-72">
-                            <img src={selectedArticle.image} className="w-full h-full object-cover" alt="Article" referrerPolicy="no-referrer" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-brand-900 to-transparent"></div>
+                        <div className="relative h-72 bg-black group">
+                            {activeMedia === 'image' || !selectedArticle.videoUrl ? (
+                                <img 
+                                    src={selectedArticle.image} 
+                                    className="w-full h-full object-cover" 
+                                    alt="Article" 
+                                    referrerPolicy="no-referrer" 
+                                />
+                            ) : (
+                                <div className="w-full h-full relative">
+                                    {isPlaying ? (
+                                        <iframe
+                                            width="100%"
+                                            height="100%"
+                                            src={`${selectedArticle.videoUrl.replace('watch?v=', 'embed/')}?autoplay=1`}
+                                            title="Article Video"
+                                            frameBorder="0"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowFullScreen
+                                            className="w-full h-full"
+                                        ></iframe>
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-brand-800 relative">
+                                            <img 
+                                                src={selectedArticle.image} 
+                                                className="w-full h-full object-cover opacity-40" 
+                                                alt="preview"
+                                                referrerPolicy="no-referrer"
+                                            />
+                                            <button 
+                                                onClick={() => setIsPlaying(true)}
+                                                className="absolute inset-0 flex items-center justify-center group/play"
+                                            >
+                                                <div className="w-16 h-16 bg-brand-accent rounded-full flex items-center justify-center shadow-xl group-hover/play:scale-110 transition-transform">
+                                                    <Play size={32} className="text-brand-900 ml-1" />
+                                                </div>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            
+                            <div className="absolute inset-0 bg-gradient-to-t from-brand-900 to-transparent pointer-events-none"></div>
+                            
+                            {/* Media Toggles */}
+                            {selectedArticle.videoUrl && (
+                                <div className="absolute bottom-4 left-4 flex gap-2 z-10">
+                                    <button 
+                                        onClick={() => { setActiveMedia('image'); setIsPlaying(false); }}
+                                        className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${activeMedia === 'image' ? 'bg-brand-accent text-brand-900' : 'bg-black/60 text-white backdrop-blur-md'}`}
+                                    >
+                                        <ImageIcon size={12} /> Photo
+                                    </button>
+                                    <button 
+                                        onClick={() => { setActiveMedia('video'); setIsPlaying(true); }}
+                                        className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${activeMedia === 'video' ? 'bg-brand-accent text-brand-900' : 'bg-black/60 text-white backdrop-blur-md'}`}
+                                    >
+                                        <Play size={12} /> Vidéo
+                                    </button>
+                                </div>
+                            )}
+
                             <button 
-                                onClick={() => setSelectedArticle(null)}
-                                className="absolute top-4 left-4 bg-black/50 backdrop-blur-md p-2 rounded-full text-white"
+                                onClick={() => { setSelectedArticle(null); setIsPlaying(false); }}
+                                className="absolute top-4 left-4 bg-black/50 backdrop-blur-md p-2 rounded-full text-white z-10"
                             >
                                 <ChevronRight size={24} className="rotate-180" />
                             </button>
-                            <button className="absolute top-4 right-4 bg-black/50 backdrop-blur-md p-2 rounded-full text-white">
+                            <button className="absolute top-4 right-4 bg-black/50 backdrop-blur-md p-2 rounded-full text-white z-10">
                                 <Share2 size={20} />
                             </button>
                         </div>

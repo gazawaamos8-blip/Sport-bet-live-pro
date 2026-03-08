@@ -6,6 +6,7 @@ export interface YouTubeVideo {
   snippet: {
     title: string;
     channelTitle: string;
+    description?: string;
     thumbnails: {
       medium: { url: string };
       high: { url: string };
@@ -21,6 +22,7 @@ export const MOCK_VIDEOS: YouTubeVideo[] = [
         snippet: {
             title: "LIVE: Manchester City vs Liverpool - Premier League",
             channelTitle: "Sky Sports Premier League",
+            description: "Watch the biggest match of the season live from Anfield.",
             thumbnails: { medium: { url: "https://i.ytimg.com/vi/h8b98_c_g50/mqdefault.jpg" }, high: { url: "" } },
             liveBroadcastContent: "live"
         }
@@ -30,16 +32,36 @@ export const MOCK_VIDEOS: YouTubeVideo[] = [
         snippet: {
             title: "Direct: Real Madrid vs Barcelona - La Liga",
             channelTitle: "Canal+ Sport",
+            description: "El Clasico is here! Real Madrid hosts Barcelona in a crucial title race clash.",
             thumbnails: { medium: { url: "https://img.youtube.com/vi/L_tqK4E0/mqdefault.jpg" }, high: { url: "" } },
+            liveBroadcastContent: "live"
+        }
+    },
+    {
+        id: { videoId: '9_v0_v0' },
+        snippet: {
+            title: "Sénégal vs Côte d'Ivoire - CAN 2026",
+            channelTitle: "CAF TV",
+            description: "The Lions of Teranga face the Elephants in this epic African showdown.",
+            thumbnails: { medium: { url: "https://picsum.photos/seed/can1/320/180" }, high: { url: "" } },
+            liveBroadcastContent: "live"
+        }
+    },
+    {
+        id: { videoId: '8_v0_v1' },
+        snippet: {
+            title: "PSG vs Marseille - Le Classique",
+            channelTitle: "BeIN Sports",
+            description: "The biggest rivalry in French football live from Parc des Princes.",
+            thumbnails: { medium: { url: "https://picsum.photos/seed/psg1/320/180" }, high: { url: "" } },
             liveBroadcastContent: "live"
         }
     }
 ];
 
-export const searchLiveSports = async (query: string = 'football live match'): Promise<YouTubeVideo[]> => {
+export const searchLiveSports = async (query: string = 'football live match', maxResults: number = 12): Promise<YouTubeVideo[]> => {
   try {
-    // videoEmbeddable=true is crucial to avoid error 153 (playback forbidden on third-party sites)
-    const url = `${BASE_API_URL}/search?part=snippet&eventType=live&type=video&videoEmbeddable=true&q=${encodeURIComponent(query)}&key=${API_KEY}&maxResults=12`;
+    const url = `${BASE_API_URL}/search?part=snippet&eventType=live&type=video&videoEmbeddable=true&q=${encodeURIComponent(query)}&key=${API_KEY}&maxResults=${maxResults}`;
     
     const response = await fetch(url);
 

@@ -108,6 +108,7 @@ export const MOCK_MATCHES: Match[] = [
     time: "72'",
     status: 'live',
     odds: { home: 1.45, draw: 4.20, away: 6.50 },
+    doubleChance: { homeDraw: 1.12, homeAway: 1.25, drawAway: 2.80 },
     homeLogo: "https://picsum.photos/100/100?random=10",
     awayLogo: "https://picsum.photos/100/100?random=101",
     startDate: new Date()
@@ -124,6 +125,7 @@ export const MOCK_MATCHES: Match[] = [
     time: "15'",
     status: 'live',
     odds: { home: 2.10, draw: 3.50, away: 3.10 },
+    doubleChance: { homeDraw: 1.35, homeAway: 1.28, drawAway: 1.70 },
     homeLogo: "https://picsum.photos/100/100?random=11",
     awayLogo: "https://picsum.photos/100/100?random=111",
     startDate: new Date()
@@ -140,6 +142,7 @@ export const MOCK_MATCHES: Match[] = [
     time: "HT",
     status: 'live',
     odds: { home: 2.80, draw: 3.00, away: 2.60 },
+    doubleChance: { homeDraw: 1.50, homeAway: 1.35, drawAway: 1.45 },
     homeLogo: "https://picsum.photos/100/100?random=12",
     awayLogo: "https://picsum.photos/100/100?random=121",
     startDate: new Date()
@@ -188,6 +191,7 @@ export const MOCK_MATCHES: Match[] = [
     time: "20:00",
     status: 'upcoming',
     odds: { home: 1.55, draw: 4.00, away: 5.20 },
+    doubleChance: { homeDraw: 1.15, homeAway: 1.22, drawAway: 2.40 },
     homeLogo: "https://picsum.photos/100/100?random=15",
     awayLogo: "https://picsum.photos/100/100?random=151",
     startDate: new Date(Date.now() + 86400000)

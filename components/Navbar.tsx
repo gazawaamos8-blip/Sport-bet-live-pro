@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
-import { Menu, Search, Bell, X, Trash2, Plus, User as UserIcon, Activity, Wallet, Gift } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Menu, Search, Bell, X, Trash2, Plus, User as UserIcon, Activity, Wallet, Gift, ShieldCheck, Lock } from 'lucide-react';
+import { db, Notification } from '../services/database';
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -14,6 +15,27 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onOpenWallet, onOpenProfil
   const [showSearch, setShowSearch] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [selectedNotif, setSelectedNotif] = useState<Notification | null>(null);
+  const [vpnEnabled, setVpnEnabled] = useState(false);
+
+  useEffect(() => {
+    const checkVpn = () => {
+        setVpnEnabled(localStorage.getItem('vpn_enabled') === 'true');
+    };
+    checkVpn();
+    window.addEventListener('storage', checkVpn);
+    return () => window.removeEventListener('storage', checkVpn);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = db.subscribeToNotifications((notifs) => {
+      setNotifications(notifs);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = e.target.value;
@@ -26,12 +48,6 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onOpenWallet, onOpenProfil
       setSearchQuery('');
       onSearch('');
   };
-
-  const notifications = [
-    { id: 1, type: 'match', title: 'Match en direct', text: "Manchester City vs Liverpool commence dans 15 min !", time: 'Il y a 2 min', read: false },
-    { id: 2, type: 'wallet', title: 'Dépôt réussi', text: "Votre dépôt de 5,000 F a été confirmé.", time: 'Il y a 1h', read: true },
-    { id: 3, type: 'promo', title: 'Bonus du jour', text: "Bonus du jour disponible : Réclamez maintenant !", time: 'Il y a 3h', read: false }
-  ];
 
   const getNotifIcon = (type: string) => {
       switch(type) {
@@ -114,7 +130,9 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onOpenWallet, onOpenProfil
             className={`p-2 sm:p-2.5 rounded-2xl transition-all relative group ${showNotifs ? 'bg-brand-accent text-brand-900 shadow-[0_0_20px_rgba(0,208,98,0.4)]' : 'text-slate-400 hover:bg-brand-800 hover:text-white'}`}
           >
             <Bell size={20} className={showNotifs ? 'animate-none' : 'group-hover:animate-bounce'} />
-            <span className={`absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-brand-900 transition-transform ${showNotifs ? 'scale-0' : 'scale-100 animate-pulse'}`}></span>
+            {unreadCount > 0 && (
+              <span className={`absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-brand-900 transition-transform ${showNotifs ? 'scale-0' : 'scale-100 animate-pulse'}`}></span>
+            )}
           </button>
 
           {/* Notifications Dropdown (The "Centre") */}
@@ -131,18 +149,21 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onOpenWallet, onOpenProfil
                         <div>
                             <h4 className="font-black text-white text-base uppercase tracking-tighter leading-none mb-1">Centre de Notifications</h4>
                             <div className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse"></span>
-                                <p className="text-[10px] text-brand-accent font-black uppercase tracking-widest">3 Nouveaux messages</p>
+                                <span className={`w-1.5 h-1.5 rounded-full ${unreadCount > 0 ? 'bg-brand-accent animate-pulse' : 'bg-slate-500'}`}></span>
+                                <p className="text-[10px] text-brand-accent font-black uppercase tracking-widest">{unreadCount} Nouveaux messages</p>
                             </div>
                         </div>
                     </div>
-                    <button className="text-[10px] text-brand-accent hover:text-white transition-all font-black uppercase bg-brand-accent/10 px-4 py-2 rounded-2xl border border-brand-accent/20 hover:bg-brand-accent hover:text-brand-900">Tout marquer lu</button>
                  </div>
                  
                  <div className="max-h-[500px] overflow-y-auto custom-scrollbar bg-brand-900/80 backdrop-blur-xl">
                     {notifications.length > 0 ? (
                         notifications.map(n => (
-                           <div key={n.id} className={`p-6 border-b border-brand-800/30 hover:bg-brand-800/50 transition-all flex gap-5 cursor-pointer relative group ${!n.read ? 'bg-brand-accent/[0.03]' : 'opacity-50'}`}>
+                           <div 
+                             key={n.id} 
+                             onClick={() => db.markNotificationAsRead(n.id)}
+                             className={`p-6 border-b border-brand-800/30 hover:bg-brand-800/50 transition-all flex gap-5 cursor-pointer relative group ${!n.read ? 'bg-brand-accent/[0.03]' : 'opacity-50'}`}
+                           >
                               {!n.read && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-accent shadow-[0_0_15px_rgba(0,208,98,0.5)]"></div>}
                               <div className={`mt-1 w-12 h-12 rounded-[22px] flex items-center justify-center flex-shrink-0 border transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 ${!n.read ? 'bg-brand-900 border-brand-600 shadow-xl' : 'bg-brand-900/50 border-brand-800'}`}>
                                   {getNotifIcon(n.type)}
@@ -155,8 +176,18 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onOpenWallet, onOpenProfil
                                   <p className="text-xs text-slate-400 leading-relaxed font-semibold">{n.text}</p>
                                   {!n.read && (
                                       <div className="mt-4 flex gap-3">
-                                          <button className="text-[10px] font-black uppercase text-brand-900 bg-brand-accent px-4 py-1.5 rounded-xl hover:bg-emerald-400 transition-all shadow-lg shadow-brand-accent/20">Voir détails</button>
-                                          <button className="text-[10px] font-black uppercase text-slate-400 hover:text-white transition-colors px-2">Ignorer</button>
+                                          <button 
+                                            onClick={(e) => { e.stopPropagation(); setSelectedNotif(n); db.markNotificationAsRead(n.id); }}
+                                            className="text-[10px] font-black uppercase text-brand-900 bg-brand-accent px-4 py-1.5 rounded-xl hover:bg-emerald-400 transition-all shadow-lg shadow-brand-accent/20"
+                                          >
+                                            Voir détails
+                                          </button>
+                                          <button 
+                                            onClick={(e) => { e.stopPropagation(); db.markNotificationAsRead(n.id); }}
+                                            className="text-[10px] font-black uppercase text-slate-400 hover:text-white transition-colors px-2"
+                                          >
+                                            Ignorer
+                                          </button>
                                       </div>
                                   )}
                               </div>
@@ -174,7 +205,10 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onOpenWallet, onOpenProfil
                  </div>
                  
                  <div className="p-5 bg-brand-900 border-t border-brand-800 flex items-center justify-between">
-                    <button className="text-[11px] font-black uppercase text-slate-500 hover:text-red-500 transition-all flex items-center gap-2 group">
+                    <button 
+                      onClick={() => db.clearNotifications()}
+                      className="text-[11px] font-black uppercase text-slate-500 hover:text-red-500 transition-all flex items-center gap-2 group"
+                    >
                        <Trash2 size={16} className="group-hover:rotate-12 transition-transform" /> Tout effacer
                     </button>
                     <div className="flex gap-4">
@@ -191,27 +225,80 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onOpenWallet, onOpenProfil
           )}
         </div>
 
-        {/* Balance & Recharge (New Design) */}
-        <div className="flex items-center bg-brand-800 rounded-full p-1 pl-3 border border-brand-700 shadow-sm">
-           <span className="font-mono font-bold text-white text-xs md:text-sm mr-2 whitespace-nowrap">
-             {balance.toLocaleString()} F
-           </span>
-           <button 
-             onClick={onOpenWallet}
-             className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-brand-accent hover:bg-emerald-400 text-brand-900 flex items-center justify-center transition-colors shadow-lg"
-             title="Recharger"
-           >
-             <Plus size={16} strokeWidth={3} />
-           </button>
-        </div>
+        {/* Notification Detail Modal */}
+        {selectedNotif && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setSelectedNotif(null)}></div>
+            <div className="bg-brand-900 border border-brand-700 w-full max-w-lg rounded-[32px] overflow-hidden relative z-10 animate-scale-in shadow-2xl">
+              <div className="p-6 bg-gradient-to-br from-brand-800 to-brand-900 border-b border-brand-700 flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-accent/10 flex items-center justify-center border border-brand-accent/20">
+                    {getNotifIcon(selectedNotif.type)}
+                  </div>
+                  <div>
+                    <h3 className="text-white font-black uppercase tracking-tight">{selectedNotif.title}</h3>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase">{selectedNotif.time}</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedNotif(null)} className="p-2 hover:bg-brand-700 rounded-full text-slate-400 transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-8">
+                <p className="text-slate-300 leading-relaxed text-lg mb-8">{selectedNotif.text}</p>
+                <div className="bg-brand-800/50 rounded-2xl p-4 border border-brand-700 mb-8">
+                  <div className="flex justify-between items-center text-xs mb-2">
+                    <span className="text-slate-500 font-bold uppercase">Date de réception</span>
+                    <span className="text-white font-mono">{new Date(selectedNotif.date).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-500 font-bold uppercase">Type de message</span>
+                    <span className="text-brand-accent font-black uppercase tracking-widest">{selectedNotif.type}</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setSelectedNotif(null)}
+                  className="w-full bg-brand-accent text-brand-900 py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-brand-accent/20 hover:bg-emerald-400 transition-all active:scale-95"
+                >
+                  Compris
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-        {/* User Profile Avatar (Always visible & Prominent) */}
-        <button 
-          onClick={onOpenProfile}
-          className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-tr from-brand-accent via-brand-500 to-purple-600 flex items-center justify-center border-2 border-white/30 shadow-[0_0_20px_rgba(0,208,98,0.3)] hover:scale-110 active:scale-90 transition-all ring-2 ring-brand-accent/20 flex-shrink-0"
-        >
-          <UserIcon size={20} className="text-white drop-shadow-md" />
-        </button>
+        {/* User Profile & Wallet Actions */}
+        <div className="flex items-center gap-2">
+            {/* VPN Status */}
+            {vpnEnabled && (
+                <div className="flex items-center gap-1.5 md:gap-2 bg-blue-500/10 border border-blue-500/30 px-2 md:px-3 py-1 md:py-1.5 rounded-full animate-fade-in">
+                    <Lock size={10} className="text-blue-500 animate-pulse md:w-3 md:h-3" />
+                    <span className="text-[8px] md:text-[10px] font-black text-blue-400 uppercase tracking-widest">VPN Actif</span>
+                </div>
+            )}
+
+            {/* Balance & Recharge */}
+            <div className="flex items-center bg-brand-800 rounded-full p-1 pl-3 border border-brand-700 shadow-sm">
+               <span className="font-mono font-bold text-white text-xs md:text-sm mr-2 whitespace-nowrap">
+                 {balance.toLocaleString()} F
+               </span>
+               <button 
+                 onClick={onOpenWallet}
+                 className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-brand-accent hover:bg-emerald-400 text-brand-900 flex items-center justify-center transition-colors shadow-lg"
+                 title="Recharger"
+               >
+                 <Plus size={16} strokeWidth={3} />
+               </button>
+            </div>
+
+            {/* User Profile Avatar */}
+            <button 
+              onClick={onOpenProfile}
+              className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-gradient-to-tr from-brand-accent via-brand-500 to-purple-600 flex items-center justify-center border-2 border-white/30 shadow-[0_0_20px_rgba(0,208,98,0.3)] hover:scale-110 active:scale-90 transition-all ring-2 ring-brand-accent/20 flex-shrink-0"
+            >
+              <UserIcon size={20} className="text-white drop-shadow-md" />
+            </button>
+        </div>
 
       </div>
     </nav>

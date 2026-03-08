@@ -149,7 +149,7 @@ export interface PlacedBet {
   stake: number;
   totalOdds: number;
   potentialWin: number;
-  status: 'pending' | 'won' | 'lost';
+  status: 'pending' | 'won' | 'lost' | 'cashed_out';
   promoCode?: string; // New field from image request
 }
 

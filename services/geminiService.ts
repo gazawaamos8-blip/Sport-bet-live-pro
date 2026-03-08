@@ -1,10 +1,20 @@
 import { GoogleGenAI } from "@google/genai";
 import { Match, PlacedBet } from '../types';
 
-// Initialize the API client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Initialize the API client safely
+const getAIClient = () => {
+  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.warn("Gemini API Key is missing. AI features will be disabled.");
+    return null;
+  }
+  return new GoogleGenAI({ apiKey });
+};
+
+const ai = getAIClient();
 
 export const analyzeMatch = async (match: Match): Promise<string> => {
+  if (!ai) return "Analyse indisponible (Clé API manquante).";
   try {
     const prompt = `
       Agis comme un expert en paris sportifs professionnel.
@@ -35,6 +45,7 @@ export const analyzeMatch = async (match: Match): Promise<string> => {
 };
 
 export const getMatchOfTheDayInsight = async (matches: Match[]): Promise<{title: string, insight: string} | null> => {
+    if (!ai) return null;
     try {
         // Explicitly look for Morocco vs Senegal as priority
         const specialMatch = matches.find(m => m.homeTeam === 'Maroc' && m.awayTeam === 'Sénégal');
@@ -71,6 +82,7 @@ export const getMatchOfTheDayInsight = async (matches: Match[]): Promise<{title:
 };
 
 export const generateDailySummary = async (matches: Match[], dateLabel: string): Promise<string> => {
+  if (!ai) return "Résumé indisponible.";
   try {
      const matchData = matches.slice(0, 10).map(m => 
        `${m.league}: ${m.homeTeam} ${m.homeScore}-${m.awayScore} ${m.awayTeam} (${m.status})`
@@ -98,6 +110,7 @@ export const generateDailySummary = async (matches: Match[], dateLabel: string):
 };
 
 export const generateChatBotMessage = async (lastBet: PlacedBet | undefined, featuredMatch: Match | undefined): Promise<string> => {
+    if (!ai) return "Gros match ce soir ! Maroc vs Sénégal à ne pas rater ! 🔥";
     try {
         let context = "";
         

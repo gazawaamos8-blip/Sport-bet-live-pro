@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { PlacedBet } from '../types';
-import { ArrowLeft, CheckCircle, MoreVertical, Share2, Printer, Ticket, Download, XCircle, Clock } from 'lucide-react';
+import { ArrowLeft, CheckCircle, MoreVertical, Share2, Printer, Ticket, Download, XCircle, Clock, DollarSign, AlertCircle, ShieldAlert } from 'lucide-react';
 import { t } from '../services/localization';
 import { getFlag } from '../services/sportApiService';
+import { db } from '../services/database';
 
 interface BetDetailModalProps {
   bet: PlacedBet;
@@ -13,6 +14,31 @@ interface BetDetailModalProps {
 const BetDetailModal: React.FC<BetDetailModalProps> = ({ bet, onClose }) => {
   const isPaid = bet.status === 'won';
   const isLost = bet.status === 'lost';
+  const isPending = bet.status === 'pending';
+
+  const calculateCashOut = (bet: PlacedBet) => {
+    const base = bet.potentialWin * 0.6;
+    const randomFactor = 0.8 + Math.random() * 0.4;
+    return Math.floor(base * randomFactor);
+  };
+
+  const handleCashOut = async () => {
+    const cashOutAmount = calculateCashOut(bet);
+    const confirmMessage = `
+VENDRE VOTRE MATCH ?
+-------------------
+Offre actuelle : ${cashOutAmount.toLocaleString()} F
+Gain potentiel : ${bet.potentialWin.toLocaleString()} F
+
+Voulez-vous accepter cette offre ?
+    `;
+
+    if (window.confirm(confirmMessage)) {
+        await db.cashOutBet(bet.id, cashOutAmount);
+        alert(`Match vendu avec succès pour ${cashOutAmount.toLocaleString()} F !`);
+        onClose();
+    }
+  };
 
   const handlePrint = () => {
     window.print();
@@ -173,27 +199,37 @@ Statut: ${bet.status.toUpperCase()}
       </div>
 
       {/* Footer Actions (Professional Buttons) */}
-      <div className="bg-white p-4 border-t border-slate-100 flex gap-3 print:hidden">
-          <button 
-             onClick={handlePrint}
-             className="flex-1 py-3.5 rounded-xl border-2 border-slate-200 text-slate-600 font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
-          >
-              <Printer size={20} /> Imprimer
-          </button>
-          
-          <button 
-             onClick={handleShare}
-             className="flex-1 py-3.5 rounded-xl bg-[#1a242d] text-white font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors"
-          >
-              <Share2 size={20} /> Partager
-          </button>
+      <div className="bg-white p-4 border-t border-slate-100 flex flex-col gap-3 print:hidden">
+          {isPending && (
+              <button 
+                onClick={handleCashOut}
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-800 text-white font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl hover:from-blue-500 hover:to-blue-700 transition-all active:scale-95 mb-1"
+              >
+                  <DollarSign size={20} /> Vendre Match ({calculateCashOut(bet).toLocaleString()} F)
+              </button>
+          )}
+          <div className="flex gap-3">
+              <button 
+                onClick={handlePrint}
+                className="flex-1 py-3.5 rounded-xl border-2 border-slate-200 text-slate-600 font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
+              >
+                  <Printer size={20} /> Imprimer
+              </button>
+              
+              <button 
+                onClick={handleShare}
+                className="flex-1 py-3.5 rounded-xl bg-[#1a242d] text-white font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors"
+              >
+                  <Share2 size={20} /> Partager
+              </button>
 
-          <button 
-             onClick={handleDownload}
-             className="flex-1 py-3.5 rounded-xl bg-[#00e676] text-slate-900 font-bold flex items-center justify-center gap-2 hover:bg-[#00c853] transition-colors"
-          >
-              <Download size={20} /> Télécharger
-          </button>
+              <button 
+                onClick={handleDownload}
+                className="flex-1 py-3.5 rounded-xl bg-[#00e676] text-slate-900 font-bold flex items-center justify-center gap-2 hover:bg-[#00c853] transition-colors"
+              >
+                  <Download size={20} /> Télécharger
+              </button>
+          </div>
       </div>
     </div>
   );

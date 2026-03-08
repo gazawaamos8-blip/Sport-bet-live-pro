@@ -31,7 +31,7 @@ import SearchPage from './components/SearchPage';
 import PaymentVerificationGate from './components/PaymentVerificationGate';
 import MonetizationModal from './components/MonetizationModal';
 import { BetSlipItem, AppSection, PlacedBet, User, Match } from './types';
-import { Home, Trophy, Ticket, Activity, Tv, Gamepad2, AlertTriangle, PartyPopper, Calendar, Minus, Plus, Save, X, Menu, BrainCircuit, Sparkles } from 'lucide-react';
+import { Home, Trophy, Ticket, Activity, Tv, Gamepad2, AlertTriangle, PartyPopper, Calendar, Minus, Plus, Save, X, Menu, BrainCircuit, Sparkles, Share2, QrCode } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchMatches, subscribeToMatchUpdates, checkBetResults } from './services/sportApiService';
 import { db } from './services/database';
@@ -101,6 +101,32 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
+  // Simulate real-time score change notifications
+  useEffect(() => {
+    if (currentSection !== AppSection.HOME) return;
+    
+    const interval = setInterval(() => {
+        const liveMatches = allMatches.filter(m => m.status === 'live');
+        if (liveMatches.length > 0) {
+            const randomMatch = liveMatches[Math.floor(Math.random() * liveMatches.length)];
+            const isHomeGoal = Math.random() > 0.5;
+            
+            // Create a notification
+            const goalMsg = `BUT ! ${isHomeGoal ? randomMatch.homeTeam : randomMatch.awayTeam} vient de marquer ! Score actuel: ${isHomeGoal ? randomMatch.homeScore + 1 : randomMatch.homeScore} - ${isHomeGoal ? randomMatch.awayScore : randomMatch.awayScore + 1}`;
+            
+            db.addNotification({
+                title: 'Alerte Score',
+                text: goalMsg,
+                type: 'match'
+            });
+
+            showNotification(goalMsg, 'win');
+        }
+    }, 45000); // Every 45 seconds simulate a goal
+
+    return () => clearInterval(interval);
+  }, [allMatches, currentSection]);
+
   // Check bet results periodically
   useEffect(() => {
     if (!user) return;
@@ -161,8 +187,18 @@ const App = () => {
       setWalletOpen(true);
       return;
     }
+
+    // Multi-bet Bonus Logic
+    let bonusPct = 0;
+    if (betSlip.length >= 3 && betSlip.length <= 5) bonusPct = 0.05;
+    else if (betSlip.length >= 6 && betSlip.length <= 10) bonusPct = 0.10;
+    else if (betSlip.length >= 11) bonusPct = 0.20;
+
     const totalOdds = betSlip.reduce((acc, item) => acc * item.odds, 1);
-    const potentialWin = Math.floor(stake * totalOdds);
+    const baseWin = stake * totalOdds;
+    const bonusAmount = Math.floor(baseWin * bonusPct);
+    const potentialWin = Math.floor(baseWin + bonusAmount);
+
     const bet: PlacedBet = {
       id: `BET-${Date.now()}`,
       date: new Date().toLocaleString(),
@@ -175,7 +211,12 @@ const App = () => {
     await db.placeBet(bet);
     setBetSlip([]);
     setBetSlipOpen(false);
-    showNotification("Pari validé avec succès !", 'success');
+    
+    let successMsg = "Pari validé avec succès !";
+    if (bonusAmount > 0) {
+        successMsg += `\n🎁 Bonus combiné (+${(bonusPct * 100)}%) : +${bonusAmount.toLocaleString()} F`;
+    }
+    showNotification(successMsg, 'success');
   };
 
   const handleTransaction = (amount: number, type: 'deposit' | 'withdraw', provider: string) => {
@@ -425,7 +466,23 @@ const App = () => {
                         <div className="bg-brand-accent text-brand-900 font-bold w-8 h-8 rounded-full flex items-center justify-center">{betSlip.length}</div>
                         <h3 className="font-bold text-white uppercase">{t('coupon')}</h3>
                     </div>
-                    <button onClick={() => setBetSlipOpen(false)} className="bg-brand-900 p-2 rounded-full text-white"><X size={18}/></button>
+                    <div className="flex items-center gap-2">
+                        <button 
+                            onClick={() => {
+                                const code = prompt("Entrez le code du coupon :");
+                                if (code) {
+                                    const coupon = db.getCoupon(code);
+                                    if (coupon) handleLoadCoupon(coupon.items);
+                                    else showNotification("Coupon invalide !", 'error');
+                                }
+                            }}
+                            className="bg-brand-700 p-2 rounded-full text-slate-300 hover:text-white transition-colors"
+                            title="Charger un coupon"
+                        >
+                            <QrCode size={18}/>
+                        </button>
+                        <button onClick={() => setBetSlipOpen(false)} className="bg-brand-900 p-2 rounded-full text-white"><X size={18}/></button>
+                    </div>
                 </div>
 
                 <div className="p-4 overflow-y-auto space-y-3">
@@ -471,6 +528,20 @@ const App = () => {
                             {generatedCode ? generatedCode : <span className="flex items-center justify-center gap-1"><Save size={14}/> Enregistrer</span>}
                         </button>
                         <button 
+                            onClick={() => {
+                                const text = `Regarde mon coupon SportBot ! Code: ${generatedCode || 'N/A'}. Cote totale: ${totalOdds.toFixed(2)}. Rejoins-moi sur SportBot !`;
+                                if (navigator.share) {
+                                    navigator.share({ title: 'Mon Coupon SportBot', text, url: window.location.href }).catch(() => {});
+                                } else {
+                                    navigator.clipboard.writeText(text);
+                                    showNotification("Lien copié !", 'success');
+                                }
+                            }}
+                            className="bg-brand-700 text-slate-300 p-3 rounded-xl hover:text-white transition-colors"
+                        >
+                            <Share2 size={18} />
+                        </button>
+                        <button 
                             onClick={placeBet}
                             className="flex-[2] bg-brand-accent text-brand-900 py-3 rounded-xl font-black text-lg uppercase shadow-lg"
                         >
@@ -513,7 +584,7 @@ const App = () => {
       <MonetizationModal isOpen={monetizationOpen} onClose={() => setMonetizationOpen(false)} />
       <AboutModal isOpen={aboutOpen} onClose={() => setAboutOpen(false)} />
       <LiveChat isOpen={chatOpen} onClose={() => setChatOpen(false)} />
-      {selectedMatch && <MatchDetail match={selectedMatch} onClose={() => setSelectedMatch(null)} />}
+      {selectedMatch && <MatchDetail match={selectedMatch} onClose={() => setSelectedMatch(null)} onAddToSlip={addToSlip} />}
       
       <AnimatePresence>
         {isSearchOpen && (

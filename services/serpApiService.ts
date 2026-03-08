@@ -10,17 +10,19 @@ export interface SerpVideo {
   duration: string;
   platform: string;
   date: string;
+  isMovie?: boolean;
 }
 
-export const searchSerpVideos = async (query: string = 'football match highlights'): Promise<SerpVideo[]> => {
+export const searchSerpVideos = async (query: string = 'football match highlights', isMovie: boolean = false): Promise<SerpVideo[]> => {
   try {
+    const finalQuery = isMovie ? `film complet vf gratuit illimité ${query}` : query;
     const params = new URLSearchParams({
-      q: query,
+      q: finalQuery,
       location: 'United States',
       hl: 'en',
       gl: 'us',
       api_key: API_KEY,
-      engine: 'google_videos' // Specifically search for videos
+      engine: 'google_videos'
     });
 
     const response = await fetch(`${BASE_URL}?${params.toString()}`);

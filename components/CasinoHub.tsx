@@ -16,6 +16,9 @@ const CasinoHub: React.FC<CasinoHubProps> = ({ searchQuery = '' }) => {
   const [localSearch, setLocalSearch] = useState('');
   const [activeGame, setActiveGame] = useState<CasinoGame | null>(null);
   const [balance, setBalance] = useState(0);
+  
+  // Default API Key for Games Hub
+  const GAME_HUB_API_KEY = "SB-GAME-HUB-PRO-2026-V1";
 
   useEffect(() => {
       const unsub = db.subscribeToBalance(setBalance);

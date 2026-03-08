@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { PlacedBet } from '../types';
-import { CheckCircle, XCircle, Clock, ChevronRight, Tag } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, ChevronRight, Tag, DollarSign, TrendingUp } from 'lucide-react';
 import BetDetailModal from './BetDetailModal';
 import { db } from '../services/database'; // Using centralized DB
 import { t } from '../services/localization';
+import { getFlag } from '../services/sportApiService';
 
 const BetHistory: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'won' | 'lost' | 'pending'>('all');
@@ -31,6 +32,7 @@ const BetHistory: React.FC = () => {
   const getStatusColor = (status: PlacedBet['status']) => {
     switch(status) {
       case 'won': return 'text-brand-accent';
+      case 'cashed_out': return 'text-blue-400';
       case 'lost': return 'text-red-500';
       default: return 'text-yellow-500';
     }
@@ -67,20 +69,35 @@ const BetHistory: React.FC = () => {
             )}
 
             <div className="p-4 flex justify-between items-center">
-               <div className="flex items-center gap-3">
-                   <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-brand-900 border ${bet.status === 'won' ? 'border-brand-accent text-brand-accent' : bet.status === 'lost' ? 'border-red-500 text-red-500' : 'border-yellow-500 text-yellow-500'}`}>
+               <div className="flex items-center gap-3 flex-1">
+                   <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-brand-900 border flex-shrink-0 ${bet.status === 'won' ? 'border-brand-accent text-brand-accent' : bet.status === 'lost' ? 'border-red-500 text-red-500' : 'border-yellow-500 text-yellow-500'}`}>
                         {bet.status === 'won' ? <CheckCircle size={20} /> : bet.status === 'lost' ? <XCircle size={20} /> : <Clock size={20} />}
                    </div>
-                   <div>
-                       <div className="text-sm font-bold text-white">{bet.items.length > 1 ? 'Combiné' : 'Simple'}</div>
-                       <div className="text-xs text-slate-500">{bet.date}</div>
+                   <div className="min-w-0">
+                       <div className="text-sm font-bold text-white truncate">
+                           {bet.items.length > 1 ? `Combiné (${bet.items.length})` : bet.items[0]?.matchInfo}
+                       </div>
+                       <div className="flex items-center gap-2 mt-1">
+                           {bet.items.slice(0, 3).map((item, i) => (
+                               <div key={i} className="flex items-center gap-1">
+                                   {item.homeCountryCode && (
+                                       <img src={getFlag(item.homeCountryCode)} className="w-3 h-2 object-cover rounded-sm" alt="flag" referrerPolicy="no-referrer" />
+                                   )}
+                                   {item.awayCountryCode && (
+                                       <img src={getFlag(item.awayCountryCode)} className="w-3 h-2 object-cover rounded-sm" alt="flag" referrerPolicy="no-referrer" />
+                                   )}
+                               </div>
+                           ))}
+                           {bet.items.length > 3 && <span className="text-[8px] text-slate-500 font-bold">+{bet.items.length - 3}</span>}
+                           <span className="text-[10px] text-slate-500 ml-1">{bet.date}</span>
+                       </div>
                    </div>
                </div>
                
-               <div className="text-right">
+               <div className="text-right ml-4">
                    <div className="font-mono font-bold text-white">{bet.stake.toLocaleString()} F</div>
                    <div className={`text-xs font-bold ${getStatusColor(bet.status)}`}>
-                       {bet.status === 'won' ? `+${bet.potentialWin.toLocaleString()} F` : bet.status === 'pending' ? t('pending') : t('lost')}
+                       {bet.status === 'won' ? `+${bet.potentialWin.toLocaleString()} F` : bet.status === 'cashed_out' ? `Vendu: ${bet.potentialWin.toLocaleString()} F` : bet.status === 'pending' ? t('pending') : t('lost')}
                    </div>
                </div>
 

@@ -30,6 +30,42 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
   };
 
   const isMatchLocked = () => {
+    if (match.status === 'finished') return true;
+    if (match.status === 'upcoming') return false;
+
+    const matchMinute = parseInt(match.time.replace("'", ""));
+    const isNearEnd = !isNaN(matchMinute) && matchMinute >= 85;
+
+    // 0-0 near end -> Lock match
+    if (isNearEnd && match.homeScore === 0 && match.awayScore === 0) return true;
+
+    // 1-0 or 0-1 near end -> Lock match (Dominating lead near end)
+    if (isNearEnd && ((match.homeScore === 1 && match.awayScore === 0) || (match.homeScore === 0 && match.awayScore === 1))) return true;
+
+    const scoreDiff = Math.abs(match.homeScore - match.awayScore);
+    const hasBigLead = scoreDiff >= 2;
+
+    return hasBigLead;
+  };
+
+  const isSelectionLocked = (selection: string) => {
+    if (isMatchLocked()) return true;
+
+    const matchMinute = parseInt(match.time.replace("'", ""));
+    const isNearEnd = !isNaN(matchMinute) && matchMinute >= 85;
+
+    if (isNearEnd) {
+        // 1-0 or 1-2 (one goal lead) near end -> Lock leading team
+        if (match.homeScore === 1 && match.awayScore === 0 && selection === 'home') return true;
+        if (match.homeScore === 0 && match.awayScore === 1 && selection === 'away') return true;
+        if (match.homeScore === 1 && match.awayScore === 2 && selection === 'away') return true;
+        if (match.homeScore === 2 && match.awayScore === 1 && selection === 'home') return true;
+        
+        // Double chance locking
+        if (match.homeScore === 1 && match.awayScore === 0 && (selection === 'homeDraw' || selection === 'homeAway')) return true;
+        if (match.homeScore === 0 && match.awayScore === 1 && (selection === 'drawAway' || selection === 'homeAway')) return true;
+    }
+
     return false;
   };
 
@@ -140,7 +176,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
             ].map((opt, idx) => (
               <button 
                 key={idx}
-                onClick={() => onAddToSlip?.({ 
+                onClick={() => !isSelectionLocked(opt.s) && onAddToSlip?.({ 
                   matchId: match.id, 
                   selection: opt.s as any, 
                   odds: opt.v, 
@@ -151,9 +187,12 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
                   homeCountryCode: match.homeCountryCode,
                   awayCountryCode: match.awayCountryCode
                 })}
-                className={`flex flex-col items-center bg-brand-900 hover:bg-brand-700 py-2 rounded-xl border border-brand-700 transition-all hover:border-brand-accent active:scale-95 group/btn ${opt.v === 0 ? 'opacity-30 pointer-events-none' : ''}`}
+                className={`flex flex-col items-center bg-brand-900 hover:bg-brand-700 py-2 rounded-xl border border-brand-700 transition-all hover:border-brand-accent active:scale-95 group/btn ${opt.v === 0 || isSelectionLocked(opt.s) ? 'opacity-30 cursor-not-allowed' : ''}`}
               >
-                <span className="text-[9px] text-slate-500 font-bold group-hover/btn:text-brand-accent transition-colors">{opt.l}</span>
+                <div className="flex items-center gap-1">
+                    <span className="text-[9px] text-slate-500 font-bold group-hover/btn:text-brand-accent transition-colors">{opt.l}</span>
+                    {isSelectionLocked(opt.s) && !isMatchLocked() && <Lock size={8} className="text-slate-500" />}
+                </div>
                 <span className="text-sm font-black text-white">{opt.v > 0 ? opt.v.toFixed(2) : '-'}</span>
               </button>
             ))}
@@ -180,31 +219,54 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
           )}
 
           {match.doubleChance && expandedDoubleChance && (
-            <div className="grid grid-cols-3 gap-2 animate-fade-in">
+            <div className="space-y-3 animate-fade-in">
+              <div className="grid grid-cols-3 gap-2">
               {[
-                { l: '1X', v: match.doubleChance.homeDraw, s: 'homeDraw' },
-                { l: '12', v: match.doubleChance.homeAway, s: 'homeAway' },
-                { l: 'X2', v: match.doubleChance.drawAway, s: 'drawAway' }
-              ].map((opt, idx) => (
-                <button 
-                  key={idx}
-                  onClick={() => onAddToSlip?.({ 
-                    matchId: match.id, 
-                    selection: opt.s as any, 
-                    odds: opt.v, 
-                    matchInfo: `${match.homeTeam} vs ${match.awayTeam}`, 
-                    league: match.league,
-                    sport: match.sport,
-                    countryCode: match.countryCode,
-                    homeCountryCode: match.homeCountryCode,
-                    awayCountryCode: match.awayCountryCode
-                  })}
-                  className={`flex flex-col items-center bg-brand-900 hover:bg-brand-700 py-1.5 rounded-xl border border-brand-700 transition-all hover:border-brand-accent active:scale-95 group/btn ${opt.v === 0 ? 'opacity-30 pointer-events-none' : ''}`}
-                >
-                  <span className="text-[9px] text-slate-500 font-bold group-hover/btn:text-brand-accent transition-colors">{opt.l}</span>
-                  <span className="text-sm font-black text-white">{opt.v > 0 ? opt.v.toFixed(2) : '-'}</span>
-                </button>
-              ))}
+                  { l: '1X', v: match.doubleChance.homeDraw, s: 'homeDraw' },
+                  { l: '12', v: match.doubleChance.homeAway, s: 'homeAway' },
+                  { l: 'X2', v: match.doubleChance.drawAway, s: 'drawAway' }
+                ].map((opt, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => !isSelectionLocked(opt.s) && onAddToSlip?.({ 
+                      matchId: match.id, 
+                      selection: opt.s as any, 
+                      odds: opt.v, 
+                      matchInfo: `${match.homeTeam} vs ${match.awayTeam}`, 
+                      league: match.league,
+                      sport: match.sport,
+                      countryCode: match.countryCode,
+                      homeCountryCode: match.homeCountryCode,
+                      awayCountryCode: match.awayCountryCode
+                    })}
+                    className={`flex flex-col items-center bg-brand-900 hover:bg-brand-700 py-1.5 rounded-xl border border-brand-700 transition-all hover:border-brand-accent active:scale-95 group/btn ${opt.v === 0 || isSelectionLocked(opt.s) ? 'opacity-30 cursor-not-allowed' : ''}`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9px] text-slate-500 font-bold group-hover/btn:text-brand-accent transition-colors">{opt.l}</span>
+                      {isSelectionLocked(opt.s) && !isMatchLocked() && <Lock size={8} className="text-slate-500" />}
+                    </div>
+                    <span className="text-sm font-black text-white">{opt.v > 0 ? opt.v.toFixed(2) : '-'}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* STATS SECTION (Injuries, Cards) - Only shown when Double Chance is expanded */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-brand-700/50">
+                <div className="bg-red-500/10 p-2 rounded-lg flex items-center gap-2 border border-red-500/20">
+                  <Activity size={14} className="text-red-500" />
+                  <div>
+                    <p className="text-[8px] text-red-400 font-black uppercase">Blessés</p>
+                    <p className="text-[10px] text-white font-bold">3 Joueurs</p>
+                  </div>
+                </div>
+                <div className="bg-yellow-500/10 p-2 rounded-lg flex items-center gap-2 border border-yellow-500/20">
+                  <Zap size={14} className="text-yellow-500" />
+                  <div>
+                    <p className="text-[8px] text-yellow-400 font-black uppercase">Cartons</p>
+                    <p className="text-[10px] text-white font-bold">1 Total</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -29,6 +29,7 @@ const MonetizationModal: React.FC<MonetizationModalProps> = ({ isOpen, onClose }
   const [isSuccess, setIsSuccess] = useState(false);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isVerifyingFace, setIsVerifyingFace] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mapSearch, setMapSearch] = useState('');
@@ -118,12 +119,34 @@ const MonetizationModal: React.FC<MonetizationModalProps> = ({ isOpen, onClose }
     }, 3000);
   };
 
-  const handleMapSearch = () => {
-    // Simulate map search
-    if (mapSearch) {
-      setFormData({ ...formData, location: mapSearch });
-      alert(`Localisation trouvée: ${mapSearch}. Coordonnées GPS enregistrées.`);
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      alert("La géolocalisation n'est pas supportée par votre navigateur.");
+      return;
     }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setFormData(prev => ({
+          ...prev,
+          lat: latitude,
+          lng: longitude,
+          location: `Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)}`
+        }));
+        setIsLocating(false);
+      },
+      (error) => {
+        setIsLocating(false);
+        let errorMsg = "Impossible d'obtenir votre position.";
+        if (error.code === error.PERMISSION_DENIED) {
+          errorMsg = "Accès à la localisation refusé. Veuillez l'autoriser dans vos paramètres.";
+        }
+        alert(errorMsg);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   };
 
   useEffect(() => {
@@ -197,24 +220,34 @@ const MonetizationModal: React.FC<MonetizationModalProps> = ({ isOpen, onClose }
                       
                       <div className="space-y-4">
                         <div>
-                          <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Rechercher sur la Carte</label>
-                          <div className="flex gap-2">
-                            <div className="relative flex-1">
-                              <input 
-                                type="text"
-                                value={mapSearch}
-                                onChange={(e) => setMapSearch(e.target.value)}
-                                placeholder="Rechercher une ville ou un quartier..."
-                                className="w-full bg-brand-900 border border-brand-700 rounded-2xl p-4 text-white text-sm focus:border-emerald-500 outline-none transition-all"
-                              />
-                              <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-700" size={18} />
-                            </div>
-                            <button 
-                              onClick={handleMapSearch}
-                              className="bg-brand-700 text-white px-6 rounded-2xl font-black uppercase text-[10px] hover:bg-brand-600 transition-all"
-                            >
-                              Trouver
-                            </button>
+                          <label className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Détection de Position</label>
+                          <button 
+                            onClick={handleGetLocation}
+                            disabled={isLocating}
+                            className="w-full bg-brand-900 border border-brand-700 rounded-2xl p-4 flex items-center justify-center gap-3 hover:border-emerald-500 transition-all group active:scale-95 disabled:opacity-50"
+                          >
+                            {isLocating ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                                <span className="text-xs text-white font-bold uppercase">Localisation en cours...</span>
+                              </>
+                            ) : (
+                              <>
+                                <MapPin className="text-emerald-500 group-hover:scale-110 transition-transform" size={20} />
+                                <span className="text-xs text-white font-bold uppercase">Obtenir ma position GPS</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-brand-900 border border-brand-700 rounded-2xl p-4">
+                            <label className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1 block">Latitude</label>
+                            <p className="text-white font-mono text-sm">{formData.lat ? formData.lat.toFixed(6) : '---'}</p>
+                          </div>
+                          <div className="bg-brand-900 border border-brand-700 rounded-2xl p-4">
+                            <label className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1 block">Longitude</label>
+                            <p className="text-white font-mono text-sm">{formData.lng ? formData.lng.toFixed(6) : '---'}</p>
                           </div>
                         </div>
 
@@ -223,7 +256,7 @@ const MonetizationModal: React.FC<MonetizationModalProps> = ({ isOpen, onClose }
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="bg-brand-800/80 backdrop-blur-sm p-4 rounded-2xl border border-brand-600 text-center">
                               <MapPin className="text-emerald-500 mx-auto mb-2" size={24} />
-                              <p className="text-[10px] text-white font-black uppercase">{formData.location || 'Position non définie'}</p>
+                              <p className="text-[10px] text-white font-black uppercase">{formData.location || 'Position non détectée'}</p>
                             </div>
                           </div>
                         </div>
