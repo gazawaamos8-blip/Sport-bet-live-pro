@@ -1,21 +1,22 @@
 {
-  "name": "SportBot Pro Live",
+  "name": "SportBot Pro",
   "short_name": "SportBot",
-  "description": "Premium Sports Betting & Live Streaming",
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0e17",
-  "theme_color": "#00d062",
+  "theme_color": "#0a0e17",
   "icons": [
     {
       "src": "https://raw.githubusercontent.com/gazawaamos8-blip/Mon-icon-/refs/heads/main/sportbot-icon.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "https://raw.githubusercontent.com/gazawaamos8-blip/Mon-icon-/refs/heads/main/sportbot-icon.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

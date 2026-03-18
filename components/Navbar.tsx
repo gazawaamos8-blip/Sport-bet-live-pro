@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Menu, Search, Bell, X, Trash2, Plus, User as UserIcon, Activity, Wallet, Gift, ShieldCheck, Lock } from 'lucide-react';
+import { Menu, Search, Bell, X, Trash2, Plus, User as UserIcon, Activity, Wallet, Gift, ShieldCheck } from 'lucide-react';
 import { db, Notification } from '../services/database';
 
 interface NavbarProps {
@@ -71,9 +71,13 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onOpenWallet, onOpenProfil
           <Menu size={24} />
         </button>
         <div className="flex items-center gap-2">
-          <img src="https://raw.githubusercontent.com/gazawaamos8-blip/Icon-sport-bet-pro/refs/heads/main/sportbet-icon%20(1).png" alt="Sport Bet" className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
+          <img src="https://raw.githubusercontent.com/gazawaamos8-blip/Mon-icon-/refs/heads/main/sportbot-icon.png" alt="Sport Bet" className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
           <div className="text-lg md:text-xl font-bold bg-gradient-to-r from-brand-400 to-brand-accent bg-clip-text text-transparent hidden sm:block">
             SportBot<span className="text-white">Pro</span>
+          </div>
+          <div className="flex items-center gap-1 bg-red-500/10 border border-red-500/20 px-1.5 py-0.5 rounded-full ml-1 hidden xs:flex">
+            <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
+            <span className="text-[8px] font-black text-red-500 uppercase tracking-tighter">Live</span>
           </div>
         </div>
       </div>
@@ -268,28 +272,22 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick, onOpenWallet, onOpenProfil
         )}
 
         {/* User Profile & Wallet Actions */}
-        <div className="flex items-center gap-2">
-            {/* VPN Status */}
-            {vpnEnabled && (
-                <div className="flex items-center gap-1.5 md:gap-2 bg-blue-500/10 border border-blue-500/30 px-2 md:px-3 py-1 md:py-1.5 rounded-full animate-fade-in">
-                    <Lock size={10} className="text-blue-500 animate-pulse md:w-3 md:h-3" />
-                    <span className="text-[8px] md:text-[10px] font-black text-blue-400 uppercase tracking-widest">VPN Actif</span>
-                </div>
-            )}
-
-            {/* Balance & Recharge */}
-            <div className="flex items-center bg-brand-800 rounded-full p-1 pl-3 border border-brand-700 shadow-sm">
-               <span className="font-mono font-bold text-white text-xs md:text-sm mr-2 whitespace-nowrap">
+        <div className="flex items-center gap-2 sm:gap-3">
+            {/* Balance Pill */}
+            <div className="flex items-center bg-brand-800 rounded-full px-3 py-1.5 border border-brand-700 shadow-inner h-10 flex-shrink-0">
+               <span className="font-mono font-bold text-white text-xs md:text-sm whitespace-nowrap">
                  {balance.toLocaleString()} F
                </span>
-               <button 
-                 onClick={onOpenWallet}
-                 className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-brand-accent hover:bg-emerald-400 text-brand-900 flex items-center justify-center transition-colors shadow-lg"
-                 title="Recharger"
-               >
-                 <Plus size={16} strokeWidth={3} />
-               </button>
             </div>
+
+            {/* Stable Recharge Button */}
+            <button 
+              onClick={onOpenWallet}
+              className="w-10 h-10 rounded-full bg-brand-accent hover:bg-emerald-400 text-brand-900 flex items-center justify-center transition-all shadow-[0_0_15px_rgba(0,208,98,0.3)] hover:scale-110 active:scale-90 flex-shrink-0"
+              title="Recharger"
+            >
+              <Plus size={20} strokeWidth={3} />
+            </button>
 
             {/* User Profile Avatar */}
             <button 

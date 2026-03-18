@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../services/database'; // CHANGED: use db instead of storageService
-import { X, Rocket, Trophy, History, Users, RefreshCw, AlertTriangle, Coins, Settings, Printer, Share2, Download, PlayCircle, PauseCircle } from 'lucide-react';
+import { X, Rocket, Trophy, History, Users, RefreshCw, AlertTriangle, Coins, Settings, Printer, Share2, Download, PlayCircle, PauseCircle, ShieldCheck } from 'lucide-react';
 import { t } from '../services/localization';
 
 interface CrashGameProps {
@@ -13,18 +13,27 @@ type BetMode = 'manual' | 'auto';
 const CrashGame: React.FC<CrashGameProps> = ({ onClose }) => {
   const [gameState, setGameState] = useState<GameState>('LOADING');
   const [multiplier, setMultiplier] = useState(1.00);
+  const [balance, setBalance] = useState(0);
   const [betAmount, setBetAmount] = useState(100);
-  const [balance, setBalance] = useState(0); // Init 0
+  const [betAmount2, setBetAmount2] = useState(100);
   const [hasBet, setHasBet] = useState(false);
+  const [hasBet2, setHasBet2] = useState(false);
   const [cashedOutAt, setCashedOutAt] = useState<number | null>(null);
+  const [cashedOutAt2, setCashedOutAt2] = useState<number | null>(null);
   const [nextRoundCountdown, setNextRoundCountdown] = useState(5);
   const [crashHistory, setCrashHistory] = useState<number[]>([1.45, 2.30, 1.10, 8.50, 1.05]);
   const [fakePlayers, setFakePlayers] = useState<{name: string, bet: number, cashout?: number, win?: number}[]>([]);
+  const [chatMessages, setChatMessages] = useState<{user: string, text: string}[]>([
+    { user: 'Admin', text: 'Bienvenue sur Aviator !' },
+    { user: 'User123', text: 'Gros multiplicateur en vue !' }
+  ]);
   
   // Advanced Controls
   const [betMode, setBetMode] = useState<BetMode>('manual');
   const [autoCashoutEnabled, setAutoCashoutEnabled] = useState(false);
   const [autoCashoutValue, setAutoCashoutValue] = useState<string>("2.00");
+  const [autoCashoutEnabled2, setAutoCashoutEnabled2] = useState(false);
+  const [autoCashoutValue2, setAutoCashoutValue2] = useState<string>("2.00");
 
   const requestRef = useRef<number>();
   const startTimeRef = useRef<number>(0);
@@ -72,16 +81,33 @@ const CrashGame: React.FC<CrashGameProps> = ({ onClose }) => {
               handleCashOut();
           }
       }
+      if (hasBet2 && !cashedOutAt2 && autoCashoutEnabled2 && betMode === 'auto') {
+          const target = parseFloat(autoCashoutValue2);
+          if (!isNaN(target) && multiplier >= target) {
+              handleCashOut2();
+          }
+      }
+
+      // Chat Simulation
+      if (Math.random() < 0.05) {
+          const users = ['ProGamer', 'LuckyShot', 'AviatorKing', 'SkyHigh'];
+          const msgs = ['Wow !', 'C\'est parti !', 'J\'ai raté le cashout...', 'Gros gain !', 'Encore un tour !'];
+          setChatMessages(prev => [...prev.slice(-10), { 
+              user: users[Math.floor(Math.random() * users.length)], 
+              text: msgs[Math.floor(Math.random() * msgs.length)] 
+          }]);
+      }
 
       return () => clearInterval(interval);
     }
-  }, [gameState, multiplier, hasBet, cashedOutAt, autoCashoutEnabled, betMode, autoCashoutValue]);
+  }, [gameState, multiplier, hasBet, cashedOutAt, hasBet2, cashedOutAt2, autoCashoutEnabled, autoCashoutEnabled2, betMode, autoCashoutValue, autoCashoutValue2]);
 
 
   const startBettingPhase = () => {
     setGameState('BETTING');
     setMultiplier(1.00);
     setCashedOutAt(null);
+    setCashedOutAt2(null);
     setNextRoundCountdown(5);
     
     // Timer 5s
@@ -130,26 +156,31 @@ const CrashGame: React.FC<CrashGameProps> = ({ onClose }) => {
     setCrashHistory(prev => [finalValue, ...prev.slice(0, 15)]);
     
     setTimeout(() => {
-        // Only reset hasBet if NOT in auto mode or if manual bet placed
-        // But for simplicity in this demo, we reset bet state every round
         setHasBet(false); 
-        
-        // AUTO BET LOGIC could go here: if (betMode === 'auto') handlePlaceBet();
-        
+        setHasBet2(false); 
         startBettingPhase();
     }, 3000);
   };
 
   const handlePlaceBet = () => {
     if (balance >= betAmount && gameState === 'BETTING') {
-      // CHANGED: Use db.updateBalance
       db.updateBalance(betAmount, 'subtract');
-      // No need to setBalance manually, subscription handles it
       setHasBet(true);
-      
-      // Log transaction
       db.addTransaction({
           amount: betAmount,
+          type: 'bet_stake',
+          status: 'success',
+          provider: 'Aviator Crash'
+      });
+    }
+  };
+
+  const handlePlaceBet2 = () => {
+    if (balance >= betAmount2 && gameState === 'BETTING') {
+      db.updateBalance(betAmount2, 'subtract');
+      setHasBet2(true);
+      db.addTransaction({
+          amount: betAmount2,
           type: 'bet_stake',
           status: 'success',
           provider: 'Aviator Crash'
@@ -160,12 +191,22 @@ const CrashGame: React.FC<CrashGameProps> = ({ onClose }) => {
   const handleCashOut = () => {
     if (gameState === 'FLYING' && hasBet && !cashedOutAt) {
       const winAmount = Math.floor(betAmount * multiplier);
-      // CHANGED: Use db.updateBalance
       db.updateBalance(winAmount, 'add');
-      // No need to setBalance manually
       setCashedOutAt(multiplier);
+      db.addTransaction({
+          amount: winAmount,
+          type: 'bet_win',
+          status: 'success',
+          provider: 'Aviator Crash'
+      });
+    }
+  };
 
-      // Log transaction
+  const handleCashOut2 = () => {
+    if (gameState === 'FLYING' && hasBet2 && !cashedOutAt2) {
+      const winAmount = Math.floor(betAmount2 * multiplier);
+      db.updateBalance(winAmount, 'add');
+      setCashedOutAt2(multiplier);
       db.addTransaction({
           amount: winAmount,
           type: 'bet_win',
@@ -237,6 +278,22 @@ const CrashGame: React.FC<CrashGameProps> = ({ onClose }) => {
             
             {/* GRAPH */}
             <div className="flex-1 relative overflow-hidden bg-[#0f1923]">
+                {/* Moving Background */}
+                <div className="absolute inset-0 opacity-20 pointer-events-none">
+                    <div className="absolute w-full h-full animate-pulse bg-[radial-gradient(circle_at_50%_50%,#ef444422_0%,transparent_70%)]"></div>
+                    <div className="absolute top-10 left-1/4 w-2 h-2 bg-white rounded-full animate-ping"></div>
+                    <div className="absolute top-40 left-3/4 w-1 h-1 bg-white rounded-full animate-ping delay-700"></div>
+                    <div className="absolute top-20 left-1/2 w-1.5 h-1.5 bg-white rounded-full animate-ping delay-300"></div>
+                </div>
+
+                {/* Provably Fair Info */}
+                <div className="absolute top-4 left-4 z-20 opacity-50 hover:opacity-100 transition-opacity">
+                    <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded px-2 py-1 flex items-center gap-1.5">
+                        <ShieldCheck size={12} className="text-brand-accent" />
+                        <span className="text-[10px] text-white font-bold uppercase tracking-wider">Provably Fair</span>
+                    </div>
+                </div>
+
                 {/* Grid */}
                 <div className="absolute inset-0 opacity-10" style={{ 
                     backgroundImage: 'linear-gradient(#4f5b66 1px, transparent 1px), linear-gradient(90deg, #4f5b66 1px, transparent 1px)', 
@@ -314,132 +371,264 @@ const CrashGame: React.FC<CrashGameProps> = ({ onClose }) => {
                     </div>
                 </div>
 
-                <div className="flex gap-4 items-stretch max-w-2xl mx-auto">
-                    {/* Bet Inputs */}
-                    <div className="flex-1 bg-[#0f1923] rounded-xl p-3 border border-slate-700 flex flex-col justify-between">
-                        <div className="flex justify-between items-center mb-2">
-                             <span className="text-[10px] text-slate-400 font-bold uppercase">{t('stake')}</span>
-                             {betMode === 'auto' && (
-                                 <div className="flex items-center gap-2">
-                                     <span className="text-[10px] text-slate-400">{t('autoCashout')}</span>
-                                     <button 
-                                        onClick={() => setAutoCashoutEnabled(!autoCashoutEnabled)}
-                                        className={`w-8 h-4 rounded-full p-0.5 transition-colors ${autoCashoutEnabled ? 'bg-brand-accent' : 'bg-slate-700'}`}
-                                     >
-                                        <div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${autoCashoutEnabled ? 'translate-x-4' : ''}`}></div>
-                                     </button>
-                                 </div>
-                             )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
+                    {/* Bet Panel 1 */}
+                    <div className="flex gap-3 items-stretch bg-[#141b21] p-3 rounded-2xl border border-white/5">
+                        <div className="flex-1 bg-[#0f1923] rounded-xl p-3 border border-slate-700 flex flex-col justify-between">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase">{t('stake')}</span>
+                                {betMode === 'auto' && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] text-slate-400">{t('autoCashout')}</span>
+                                        <button 
+                                            onClick={() => setAutoCashoutEnabled(!autoCashoutEnabled)}
+                                            className={`w-8 h-4 rounded-full p-0.5 transition-colors ${autoCashoutEnabled ? 'bg-brand-accent' : 'bg-slate-700'}`}
+                                        >
+                                            <div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${autoCashoutEnabled ? 'translate-x-4' : ''}`}></div>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex gap-2 mb-2">
+                                <button onClick={() => !hasBet && setBetAmount(Math.max(100, betAmount - 100))} disabled={hasBet} className="w-8 h-8 bg-slate-700 rounded text-white font-bold">-</button>
+                                <input 
+                                    type="number" 
+                                    value={betAmount} 
+                                    onChange={(e) => !hasBet && setBetAmount(Number(e.target.value))}
+                                    disabled={hasBet}
+                                    className="flex-1 bg-transparent text-center font-black text-xl text-white outline-none"
+                                />
+                                <button onClick={() => !hasBet && setBetAmount(betAmount + 100)} disabled={hasBet} className="w-8 h-8 bg-slate-700 rounded text-white font-bold">+</button>
+                            </div>
+                            
+                            {betMode === 'auto' && autoCashoutEnabled && (
+                                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-700">
+                                    <span className="text-xs text-brand-accent font-bold">À</span>
+                                    <input 
+                                        type="text" 
+                                        value={autoCashoutValue}
+                                        onChange={(e) => setAutoCashoutValue(e.target.value)}
+                                        className="w-full bg-[#1a242d] rounded px-2 py-1 text-white font-bold text-center text-sm outline-none border border-slate-600 focus:border-brand-accent"
+                                        placeholder="2.00"
+                                    />
+                                    <span className="text-xs text-brand-accent font-bold">x</span>
+                                </div>
+                            )}
                         </div>
 
-                        <div className="flex gap-2 mb-2">
-                             <button onClick={() => !hasBet && setBetAmount(Math.max(100, betAmount - 100))} disabled={hasBet} className="w-8 h-8 bg-slate-700 rounded text-white font-bold">-</button>
-                             <input 
-                                type="number" 
-                                value={betAmount} 
-                                onChange={(e) => !hasBet && setBetAmount(Number(e.target.value))}
-                                disabled={hasBet}
-                                className="flex-1 bg-transparent text-center font-black text-xl text-white outline-none"
-                             />
-                             <button onClick={() => !hasBet && setBetAmount(betAmount + 100)} disabled={hasBet} className="w-8 h-8 bg-slate-700 rounded text-white font-bold">+</button>
+                        <div className="w-32 md:w-40">
+                            {hasBet && !cashedOutAt && gameState !== 'CRASHED' ? (
+                                <button 
+                                    onClick={handleCashOut}
+                                    className={`w-full h-full rounded-xl bg-orange-500 hover:bg-orange-400 border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all flex flex-col items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.4)] ${gameState === 'BETTING' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    disabled={gameState === 'BETTING'}
+                                >
+                                    <span className="text-xs font-bold text-orange-900 uppercase">{t('cashout')}</span>
+                                    <span className="text-xl font-black text-white">
+                                        {Math.floor(betAmount * multiplier).toLocaleString()}
+                                    </span>
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={handlePlaceBet}
+                                    disabled={hasBet || gameState !== 'BETTING'}
+                                    className={`w-full h-full rounded-xl flex flex-col items-center justify-center border-b-4 transition-all
+                                        ${hasBet 
+                                            ? 'bg-[#26a17b] border-[#1e6f56] opacity-50 cursor-default'
+                                            : gameState === 'BETTING' 
+                                                ? 'bg-green-500 hover:bg-green-400 border-green-700 text-white cursor-pointer shadow-[0_0_20px_rgba(34,197,94,0.4)]'
+                                                : 'bg-red-500/20 border-red-500/50 text-red-500 cursor-not-allowed'
+                                        }
+                                    `}
+                                >
+                                    {hasBet ? (
+                                        <>
+                                            <span className="text-xs font-bold uppercase text-white/80">{t('pending')}</span>
+                                            <span className="text-xl font-black text-white">...</span>
+                                        </>
+                                    ) : gameState === 'BETTING' ? (
+                                        <>
+                                            <span className="text-lg font-black uppercase">{t('placeBet')}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-sm font-black uppercase">{t('pending')}</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
                         </div>
-                        
-                        {betMode === 'auto' && autoCashoutEnabled && (
-                            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-700">
-                                <span className="text-xs text-brand-accent font-bold">À</span>
-                                <input 
-                                    type="text" 
-                                    value={autoCashoutValue}
-                                    onChange={(e) => setAutoCashoutValue(e.target.value)}
-                                    className="w-full bg-[#1a242d] rounded px-2 py-1 text-white font-bold text-center text-sm outline-none border border-slate-600 focus:border-brand-accent"
-                                    placeholder="2.00"
-                                />
-                                <span className="text-xs text-brand-accent font-bold">x</span>
-                            </div>
-                        )}
                     </div>
 
-                    {/* BIG BUTTON */}
-                    <div className="w-40 md:w-56">
-                        {hasBet && !cashedOutAt && gameState !== 'CRASHED' ? (
-                            <button 
-                                onClick={handleCashOut}
-                                className={`w-full h-full rounded-xl bg-orange-500 hover:bg-orange-400 border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all flex flex-col items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.4)] ${gameState === 'BETTING' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                disabled={gameState === 'BETTING'}
-                            >
-                                <span className="text-xs font-bold text-orange-900 uppercase">{t('cashout')}</span>
-                                <span className="text-2xl font-black text-white">
-                                    {Math.floor(betAmount * multiplier).toLocaleString()}
-                                </span>
-                            </button>
-                        ) : (
-                            <button 
-                                onClick={handlePlaceBet}
-                                disabled={hasBet || gameState !== 'BETTING'}
-                                className={`w-full h-full rounded-xl flex flex-col items-center justify-center border-b-4 transition-all
-                                    ${hasBet 
-                                        ? 'bg-[#26a17b] border-[#1e6f56] opacity-50 cursor-default'
-                                        : gameState === 'BETTING' 
-                                            ? 'bg-green-500 hover:bg-green-400 border-green-700 text-white cursor-pointer shadow-[0_0_20px_rgba(34,197,94,0.4)]'
-                                            : 'bg-red-500/20 border-red-500/50 text-red-500 cursor-not-allowed'
-                                    }
-                                `}
-                            >
-                                 {hasBet ? (
-                                     <>
-                                        <span className="text-xs font-bold uppercase text-white/80">{t('pending')}</span>
-                                        <span className="text-xl font-black text-white">...</span>
-                                     </>
-                                 ) : gameState === 'BETTING' ? (
-                                     <>
-                                        <span className="text-lg font-black uppercase">{t('placeBet')}</span>
-                                     </>
-                                 ) : (
-                                     <>
-                                        <span className="text-sm font-black uppercase">{t('pending')}</span>
-                                     </>
-                                 )}
-                            </button>
-                        )}
+                    {/* Bet Panel 2 */}
+                    <div className="flex gap-3 items-stretch bg-[#141b21] p-3 rounded-2xl border border-white/5">
+                        <div className="flex-1 bg-[#0f1923] rounded-xl p-3 border border-slate-700 flex flex-col justify-between">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase">{t('stake')}</span>
+                                {betMode === 'auto' && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] text-slate-400">{t('autoCashout')}</span>
+                                        <button 
+                                            onClick={() => setAutoCashoutEnabled2(!autoCashoutEnabled2)}
+                                            className={`w-8 h-4 rounded-full p-0.5 transition-colors ${autoCashoutEnabled2 ? 'bg-brand-accent' : 'bg-slate-700'}`}
+                                        >
+                                            <div className={`w-3 h-3 bg-white rounded-full shadow transition-transform ${autoCashoutEnabled2 ? 'translate-x-4' : ''}`}></div>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex gap-2 mb-2">
+                                <button onClick={() => !hasBet2 && setBetAmount2(Math.max(100, betAmount2 - 100))} disabled={hasBet2} className="w-8 h-8 bg-slate-700 rounded text-white font-bold">-</button>
+                                <input 
+                                    type="number" 
+                                    value={betAmount2} 
+                                    onChange={(e) => !hasBet2 && setBetAmount2(Number(e.target.value))}
+                                    disabled={hasBet2}
+                                    className="flex-1 bg-transparent text-center font-black text-xl text-white outline-none"
+                                />
+                                <button onClick={() => !hasBet2 && setBetAmount2(betAmount2 + 100)} disabled={hasBet2} className="w-8 h-8 bg-slate-700 rounded text-white font-bold">+</button>
+                            </div>
+                            
+                            {betMode === 'auto' && autoCashoutEnabled2 && (
+                                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-700">
+                                    <span className="text-xs text-brand-accent font-bold">À</span>
+                                    <input 
+                                        type="text" 
+                                        value={autoCashoutValue2}
+                                        onChange={(e) => setAutoCashoutValue2(e.target.value)}
+                                        className="w-full bg-[#1a242d] rounded px-2 py-1 text-white font-bold text-center text-sm outline-none border border-slate-600 focus:border-brand-accent"
+                                        placeholder="2.00"
+                                    />
+                                    <span className="text-xs text-brand-accent font-bold">x</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="w-32 md:w-40">
+                            {hasBet2 && !cashedOutAt2 && gameState !== 'CRASHED' ? (
+                                <button 
+                                    onClick={handleCashOut2}
+                                    className={`w-full h-full rounded-xl bg-orange-500 hover:bg-orange-400 border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all flex flex-col items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.4)] ${gameState === 'BETTING' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    disabled={gameState === 'BETTING'}
+                                >
+                                    <span className="text-xs font-bold text-orange-900 uppercase">{t('cashout')}</span>
+                                    <span className="text-xl font-black text-white">
+                                        {Math.floor(betAmount2 * multiplier).toLocaleString()}
+                                    </span>
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={handlePlaceBet2}
+                                    disabled={hasBet2 || gameState !== 'BETTING'}
+                                    className={`w-full h-full rounded-xl flex flex-col items-center justify-center border-b-4 transition-all
+                                        ${hasBet2 
+                                            ? 'bg-[#26a17b] border-[#1e6f56] opacity-50 cursor-default'
+                                            : gameState === 'BETTING' 
+                                                ? 'bg-green-500 hover:bg-green-400 border-green-700 text-white cursor-pointer shadow-[0_0_20px_rgba(34,197,94,0.4)]'
+                                                : 'bg-red-500/20 border-red-500/50 text-red-500 cursor-not-allowed'
+                                        }
+                                    `}
+                                >
+                                    {hasBet2 ? (
+                                        <>
+                                            <span className="text-xs font-bold uppercase text-white/80">{t('pending')}</span>
+                                            <span className="text-xl font-black text-white">...</span>
+                                        </>
+                                    ) : gameState === 'BETTING' ? (
+                                        <>
+                                            <span className="text-lg font-black uppercase">{t('placeBet')}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-sm font-black uppercase">{t('pending')}</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
          </div>
 
-         {/* RIGHT: Live Bets Sidebar (Hidden on mobile) */}
-         <div className="w-72 bg-[#1a242d] border-l border-white/5 flex flex-col hidden md:flex">
-             <div className="p-3 bg-[#242f38] font-bold text-xs text-slate-400 uppercase flex justify-between items-center">
-                 <span>Paris du tour</span>
-                 <div className="flex items-center gap-1 text-green-500"><Users size={12} /> {fakePlayers.length + 1}</div>
+         {/* RIGHT: Live Bets & Chat Sidebar (Hidden on mobile) */}
+         <div className="w-80 bg-[#1a242d] border-l border-white/5 flex flex-col hidden lg:flex">
+             <div className="flex-1 flex flex-col min-h-0">
+                 <div className="p-3 bg-[#242f38] font-bold text-xs text-slate-400 uppercase flex justify-between items-center">
+                     <span>Paris du tour</span>
+                     <div className="flex items-center gap-1 text-green-500"><Users size={12} /> {fakePlayers.length + (hasBet ? 1 : 0) + (hasBet2 ? 1 : 0)}</div>
+                 </div>
+                 <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+                     {hasBet && (
+                         <div className={`flex justify-between items-center p-2 rounded border ${cashedOutAt ? 'bg-green-500/10 border-green-500/50' : 'bg-[#2c3842] border-transparent'}`}>
+                             <div className="flex items-center gap-2">
+                                 <div className="w-6 h-6 rounded bg-orange-500 text-white flex items-center justify-center font-bold text-xs">1</div>
+                                 <span className="text-sm font-bold text-white">Moi (Bet 1)</span>
+                             </div>
+                             <div className="text-right">
+                                 <div className="text-sm text-slate-300">{betAmount}</div>
+                                 {cashedOutAt && <div className="text-xs font-black text-green-500">x{cashedOutAt.toFixed(2)}</div>}
+                             </div>
+                         </div>
+                     )}
+                     {hasBet2 && (
+                         <div className={`flex justify-between items-center p-2 rounded border ${cashedOutAt2 ? 'bg-green-500/10 border-green-500/50' : 'bg-[#2c3842] border-transparent'}`}>
+                             <div className="flex items-center gap-2">
+                                 <div className="w-6 h-6 rounded bg-orange-500 text-white flex items-center justify-center font-bold text-xs">2</div>
+                                 <span className="text-sm font-bold text-white">Moi (Bet 2)</span>
+                             </div>
+                             <div className="text-right">
+                                 <div className="text-sm text-slate-300">{betAmount2}</div>
+                                 {cashedOutAt2 && <div className="text-xs font-black text-green-500">x{cashedOutAt2.toFixed(2)}</div>}
+                             </div>
+                         </div>
+                     )}
+                     {fakePlayers.map((player, i) => (
+                         <div key={i} className={`flex justify-between items-center p-1.5 rounded transition-colors ${player.cashout ? 'bg-green-500/5' : ''}`}>
+                             <div className="text-xs text-slate-500">{player.name}</div>
+                             <div className="flex items-center gap-4">
+                                <div className="text-xs text-slate-300">{player.bet}</div>
+                                {player.cashout ? (
+                                    <div className="bg-green-500/20 text-green-400 px-1.5 rounded text-[10px] font-bold min-w-[40px] text-right">
+                                        {player.cashout.toFixed(2)}x
+                                    </div>
+                                ) : (
+                                    <div className="text-xs text-slate-600 italic">...</div>
+                                )}
+                             </div>
+                         </div>
+                     ))}
+                 </div>
              </div>
-             <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-                 {hasBet && (
-                     <div className={`flex justify-between items-center p-2 rounded border ${cashedOutAt ? 'bg-green-500/10 border-green-500/50' : 'bg-[#2c3842] border-transparent'}`}>
-                         <div className="flex items-center gap-2">
-                             <div className="w-6 h-6 rounded bg-orange-500 text-white flex items-center justify-center font-bold text-xs">M</div>
-                             <span className="text-sm font-bold text-white">Moi</span>
+
+             <div className="h-64 border-t border-white/5 flex flex-col min-h-0">
+                 <div className="p-3 bg-[#242f38] font-bold text-xs text-slate-400 uppercase">Chat en direct</div>
+                 <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                     {chatMessages.map((msg, i) => (
+                         <div key={i} className="text-xs">
+                             <span className="font-bold text-brand-accent mr-2">{msg.user}:</span>
+                             <span className="text-slate-300">{msg.text}</span>
                          </div>
-                         <div className="text-right">
-                             <div className="text-sm text-slate-300">{betAmount}</div>
-                             {cashedOutAt && <div className="text-xs font-black text-green-500">x{cashedOutAt.toFixed(2)}</div>}
-                         </div>
-                     </div>
-                 )}
-                 {fakePlayers.map((player, i) => (
-                     <div key={i} className={`flex justify-between items-center p-1.5 rounded transition-colors ${player.cashout ? 'bg-green-500/5' : ''}`}>
-                         <div className="text-xs text-slate-500">{player.name}</div>
-                         <div className="flex items-center gap-4">
-                            <div className="text-xs text-slate-300">{player.bet}</div>
-                            {player.cashout ? (
-                                <div className="bg-green-500/20 text-green-400 px-1.5 rounded text-[10px] font-bold min-w-[40px] text-right">
-                                    {player.cashout.toFixed(2)}x
-                                </div>
-                            ) : (
-                                <div className="text-xs text-slate-600 italic">...</div>
-                            )}
-                         </div>
-                     </div>
-                 ))}
+                     ))}
+                 </div>
+                 <div className="p-2 bg-[#0f1923]">
+                     <input 
+                        type="text" 
+                        placeholder="Écrire un message..." 
+                        className="w-full bg-[#1a242d] border border-white/10 rounded px-3 py-1.5 text-xs text-white outline-none focus:border-brand-accent"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                const val = (e.target as HTMLInputElement).value;
+                                if (val.trim()) {
+                                    setChatMessages(prev => [...prev, { user: 'Moi', text: val }]);
+                                    (e.target as HTMLInputElement).value = '';
+                                }
+                            }
+                        }}
+                     />
+                 </div>
              </div>
          </div>
       </div>

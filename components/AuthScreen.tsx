@@ -90,6 +90,14 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
       <div className="w-full max-w-sm bg-brand-800/80 backdrop-blur-xl p-8 rounded-3xl border border-brand-700 shadow-2xl relative z-10 animate-fade-in">
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <img 
+              src="https://raw.githubusercontent.com/gazawaamos8-blip/Mon-icon-/refs/heads/main/sportbot-icon.png" 
+              alt="SportBot Logo" 
+              className="w-20 h-20 object-contain drop-shadow-2xl animate-float"
+              referrerPolicy="no-referrer"
+            />
+          </div>
           <h1 className="text-4xl font-black italic text-white tracking-tighter mb-1 drop-shadow-lg">
             SPORT<span className="text-brand-accent">BET</span>
           </h1>

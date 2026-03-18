@@ -1,4 +1,7 @@
-const API_KEY = 'AIzaSyDFko_ouqtmkabLfElMHTU_LAjD35EavUY';
+const API_KEYS = [
+  'AIzaSyDFko_ouqtmkabLfElMHTU_LAjD35EavUY', // Clé par défaut
+  'AIzaSyA_fallback_key_placeholder' 
+];
 const BASE_API_URL = 'https://www.googleapis.com/youtube/v3';
 
 export interface YouTubeVideo {
@@ -59,22 +62,24 @@ export const MOCK_VIDEOS: YouTubeVideo[] = [
     }
 ];
 
-export const searchLiveSports = async (query: string = 'football live match', maxResults: number = 12): Promise<YouTubeVideo[]> => {
-  try {
-    const url = `${BASE_API_URL}/search?part=snippet&eventType=live&type=video&videoEmbeddable=true&q=${encodeURIComponent(query)}&key=${API_KEY}&maxResults=${maxResults}`;
-    
-    const response = await fetch(url);
+export const searchLiveSports = async (query: string = 'football live match', maxResults: number = 12, pageToken?: string): Promise<{items: YouTubeVideo[], nextPageToken?: string}> => {
+  for (const key of API_KEYS) {
+    try {
+      let url = `${BASE_API_URL}/search?part=snippet&eventType=live&type=video&videoEmbeddable=true&q=${encodeURIComponent(query)}&key=${key}&maxResults=${maxResults}`;
+      if (pageToken) url += `&pageToken=${pageToken}`;
+      
+      const response = await fetch(url);
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.warn("YouTube API issue:", errorData?.error?.message || response.statusText);
-      return MOCK_VIDEOS;
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          items: data.items || [],
+          nextPageToken: data.nextPageToken
+        };
+      }
+    } catch (error) {
+      console.error(`Erreur fetch YouTube avec clé ${key.substring(0, 5)}...:`, error);
     }
-
-    const data = await response.json();
-    return data.items && data.items.length > 0 ? data.items : MOCK_VIDEOS;
-  } catch (error) {
-    console.error("Erreur fetch YouTube:", error);
-    return MOCK_VIDEOS; 
   }
+  return { items: MOCK_VIDEOS };
 };

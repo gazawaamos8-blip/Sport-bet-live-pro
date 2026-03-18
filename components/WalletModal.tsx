@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { X, Smartphone, ArrowDown, ArrowUp, ShieldCheck, AlertCircle, Ban, CreditCard, Wallet, Bitcoin, Globe, QrCode, Copy, Check, ChevronDown, Lock } from 'lucide-react';
 import { initiatePayment } from '../services/flutterwaveService';
+import { initiateCinetPayPayment } from '../services/cinetpayService';
 import { db } from '../services/database'; // Use centralized DB
 import { t } from '../services/localization';
 
@@ -13,7 +14,7 @@ interface WalletModalProps {
 
 const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransaction }) => {
   const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
-  const [paymentMethod, setPaymentMethod] = useState<'momo' | 'card' | 'paypal' | 'crypto'>('momo');
+  const [paymentMethod, setPaymentMethod] = useState<'momo' | 'card' | 'paypal' | 'crypto' | 'cinetpay'>('momo');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{type: 'error' | 'success' | 'info', text: string} | null>(null);
@@ -132,6 +133,21 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransactio
     // Crypto Deposit Simulation
     if (activeTab === 'deposit' && paymentMethod === 'crypto') {
         handleDepositSimulation(`Crypto (${cryptoNetwork})`);
+        return;
+    }
+
+    // CINETPAY INTEGRATION
+    if (activeTab === 'deposit' && paymentMethod === 'cinetpay') {
+        initiateCinetPayPayment({
+            amount: Number(amount),
+            onSuccess: (data) => {
+                finalizeTransaction(Number(amount), 'deposit', 'CinetPay');
+            },
+            onError: (err) => {
+                setLoading(false);
+                setStatusMsg({ type: 'error', text: "Erreur CinetPay: " + (typeof err === 'string' ? err : "Échec du paiement") });
+            }
+        });
         return;
     }
 
@@ -256,6 +272,17 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransactio
                   </div>
 
                   <div 
+                    onClick={() => setPaymentMethod('cinetpay')}
+                    className={`p-3 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${paymentMethod === 'cinetpay' ? 'bg-brand-700 border-brand-accent shadow-lg' : 'bg-brand-900 border-brand-700 hover:border-slate-500'}`}
+                  >
+                      <div className="bg-emerald-600 text-white p-2 rounded-lg"><Globe size={20} /></div>
+                      <div>
+                          <div className="font-bold text-white text-sm">CinetPay</div>
+                          <div className="text-[10px] text-slate-400">MoMo / Card</div>
+                      </div>
+                  </div>
+
+                  <div 
                     onClick={() => setPaymentMethod('paypal')}
                     className={`p-3 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${paymentMethod === 'paypal' ? 'bg-brand-700 border-brand-accent shadow-lg' : 'bg-brand-900 border-brand-700 hover:border-slate-500'}`}
                   >
@@ -283,8 +310,8 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransactio
 
           {/* DYNAMIC FIELDS based on Method */}
           
-          {/* 1. MOBILE MONEY */}
-          {paymentMethod === 'momo' && (
+          {/* 1. MOBILE MONEY / CINETPAY */}
+          {(paymentMethod === 'momo' || paymentMethod === 'cinetpay') && (
               <div className="space-y-2 animate-fade-in">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                       {activeTab === 'deposit' ? 'Numéro (Mobile Money / USSD)' : 'Numéro de réception'}
@@ -302,7 +329,7 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransactio
                   </div>
                   {activeTab === 'deposit' && (
                       <p className="text-[10px] text-brand-accent mt-1 flex items-center gap-1">
-                          <Check size={10} /> Redirection sécurisée Flutterwave
+                          <Check size={10} /> {paymentMethod === 'momo' ? 'Redirection sécurisée Flutterwave' : 'Redirection sécurisée CinetPay'}
                       </p>
                   )}
               </div>

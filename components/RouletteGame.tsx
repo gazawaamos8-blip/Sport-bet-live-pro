@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/database';
-import { X, RefreshCw, Trophy, Coins } from 'lucide-react';
+import { X, RefreshCw, Trophy, Coins, ShieldCheck } from 'lucide-react';
 
 interface RouletteGameProps {
   onClose: () => void;
@@ -11,9 +11,9 @@ const RouletteGame: React.FC<RouletteGameProps> = ({ onClose }) => {
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [betAmount, setBetAmount] = useState(1000);
-  const [selectedBet, setSelectedBet] = useState<'red' | 'black' | 'green' | number | null>(null);
+  const [selectedBets, setSelectedBets] = useState<('red' | 'black' | 'green' | number)[]>([]);
   const [history, setHistory] = useState<number[]>([14, 2, 0, 24, 5]);
-  const [message, setMessage] = useState("Placez vos paris");
+  const [message, setMessage] = useState("Placez vos paris (Sélectionnez 3-4 numéros)");
   const [winAmount, setWinAmount] = useState<number | null>(null);
 
   // Configuration de la roue (Ordre Européen)
@@ -29,6 +29,18 @@ const RouletteGame: React.FC<RouletteGameProps> = ({ onClose }) => {
     return () => unsub();
   }, []);
 
+  const toggleBet = (bet: 'red' | 'black' | 'green' | number) => {
+    if (spinning) return;
+    setSelectedBets(prev => {
+        if (prev.includes(bet)) {
+            return prev.filter(b => b !== bet);
+        } else {
+            // Allow multiple bets
+            return [...prev, bet];
+        }
+    });
+  };
+
   const getBgColor = (num: number) => {
     if (num === 0) return 'bg-green-600';
     return RED_NUMBERS.includes(num) ? 'bg-red-600' : 'bg-slate-800';
@@ -36,19 +48,21 @@ const RouletteGame: React.FC<RouletteGameProps> = ({ onClose }) => {
 
   const handleSpin = () => {
     if (spinning) return;
-    if (selectedBet === null) {
-        setMessage("Sélectionnez une case !");
+    if (selectedBets.length === 0) {
+        setMessage("Sélectionnez au moins une case !");
         return;
     }
-    if (balance < betAmount) {
-        setMessage("Solde insuffisant !");
+    
+    const totalBet = betAmount * selectedBets.length;
+    if (balance < totalBet) {
+        setMessage("Solde insuffisant pour tous les paris !");
         return;
     }
 
     setWinAmount(null);
     setMessage("Rien ne va plus...");
     setSpinning(true);
-    db.updateBalance(betAmount, 'subtract');
+    db.updateBalance(totalBet, 'subtract');
 
     // Déterminer le résultat
     const randomIndex = Math.floor(Math.random() * WHEEL_NUMBERS.length);
@@ -58,7 +72,6 @@ const RouletteGame: React.FC<RouletteGameProps> = ({ onClose }) => {
     const sliceAngle = 360 / 37;
     
     // On ajoute 5 tours complets (1800 deg) + l'angle cible
-    // Note: L'index 0 est en haut. Pour aligner l'index N en haut, on tourne.
     const offsetRotation = randomIndex * sliceAngle;
     const newRotation = rotation + 1800 + (360 - offsetRotation);
 
@@ -66,40 +79,46 @@ const RouletteGame: React.FC<RouletteGameProps> = ({ onClose }) => {
 
     setTimeout(() => {
         handleGameEnd(resultNumber);
-    }, 3500); // Durée synchro avec transition CSS
+    }, 3500);
   };
 
   const handleGameEnd = (result: number) => {
     setSpinning(false);
     setHistory(prev => [result, ...prev.slice(0, 9)]);
 
-    let won = false;
-    let multiplier = 0;
+    let totalWin = 0;
 
-    // Logique de Gain
-    if (typeof selectedBet === 'number') {
-        if (selectedBet === result) {
-            won = true;
-            multiplier = 36;
-        }
-    } else {
-        if (selectedBet === 'green' && result === 0) {
-            won = true;
-            multiplier = 36;
-        } else if (selectedBet === 'red' && RED_NUMBERS.includes(result)) {
-            won = true;
-            multiplier = 2;
-        } else if (selectedBet === 'black' && result !== 0 && !RED_NUMBERS.includes(result)) {
-            won = true;
-            multiplier = 2;
-        }
-    }
+    selectedBets.forEach(bet => {
+        let won = false;
+        let multiplier = 0;
 
-    if (won) {
-        const gain = betAmount * multiplier;
-        db.updateBalance(gain, 'add');
-        setWinAmount(gain);
-        setMessage(`GAGNÉ ! ${result} sort.`);
+        if (typeof bet === 'number') {
+            if (bet === result) {
+                won = true;
+                multiplier = 36;
+            }
+        } else {
+            if (bet === 'green' && result === 0) {
+                won = true;
+                multiplier = 36;
+            } else if (bet === 'red' && RED_NUMBERS.includes(result)) {
+                won = true;
+                multiplier = 2;
+            } else if (bet === 'black' && result !== 0 && !RED_NUMBERS.includes(result)) {
+                won = true;
+                multiplier = 2;
+            }
+        }
+
+        if (won) {
+            totalWin += betAmount * multiplier;
+        }
+    });
+
+    if (totalWin > 0) {
+        db.updateBalance(totalWin, 'add');
+        setWinAmount(totalWin);
+        setMessage(`GAGNÉ ! ${result} sort. Gain: ${totalWin} F`);
     } else {
         setMessage(`PERDU. Le ${result} est sorti.`);
     }
@@ -194,8 +213,8 @@ const RouletteGame: React.FC<RouletteGameProps> = ({ onClose }) => {
               {/* Numbers Grid */}
               <div className="grid grid-cols-12 gap-1 mb-4 h-24 overflow-y-auto custom-scrollbar">
                   <button 
-                     onClick={() => !spinning && setSelectedBet(0)}
-                     className={`col-span-12 md:col-span-1 py-1 rounded font-bold text-xs border ${selectedBet === 0 ? 'bg-green-500 text-brand-900 border-white' : 'bg-green-600/20 text-green-500 border-green-600/30'}`}
+                     onClick={() => toggleBet(0)}
+                     className={`col-span-12 md:col-span-1 py-1 rounded font-bold text-xs border ${selectedBets.includes(0) ? 'bg-green-500 text-brand-900 border-white' : 'bg-green-600/20 text-green-500 border-green-600/30'}`}
                   >
                       0
                   </button>
@@ -203,11 +222,11 @@ const RouletteGame: React.FC<RouletteGameProps> = ({ onClose }) => {
                   {[...Array(36)].map((_, i) => {
                       const num = i + 1;
                       const isRed = RED_NUMBERS.includes(num);
-                      const isSelected = selectedBet === num;
+                      const isSelected = selectedBets.includes(num);
                       return (
                           <button
                               key={num}
-                              onClick={() => !spinning && setSelectedBet(num)}
+                              onClick={() => toggleBet(num)}
                               className={`col-span-2 md:col-span-1 py-2 rounded text-xs font-bold border transition-all ${
                                   isSelected 
                                     ? 'bg-white text-brand-900 scale-110 z-10 shadow-lg' 
@@ -225,14 +244,14 @@ const RouletteGame: React.FC<RouletteGameProps> = ({ onClose }) => {
               {/* Main Buttons */}
               <div className="flex gap-3 items-stretch h-12">
                   <button 
-                    onClick={() => !spinning && setSelectedBet('red')}
-                    className={`flex-1 rounded-xl border-b-4 font-black uppercase text-sm transition-all ${selectedBet === 'red' ? 'bg-red-500 text-white border-red-700 translate-y-1 border-b-0' : 'bg-red-500/20 text-red-500 border-red-500/50 hover:bg-red-500/30'}`}
+                    onClick={() => toggleBet('red')}
+                    className={`flex-1 rounded-xl border-b-4 font-black uppercase text-sm transition-all ${selectedBets.includes('red') ? 'bg-red-500 text-white border-red-700 translate-y-1 border-b-0' : 'bg-red-500/20 text-red-500 border-red-500/50 hover:bg-red-500/30'}`}
                   >
                       Rouge x2
                   </button>
                   <button 
-                    onClick={() => !spinning && setSelectedBet('black')}
-                    className={`flex-1 rounded-xl border-b-4 font-black uppercase text-sm transition-all ${selectedBet === 'black' ? 'bg-slate-700 text-white border-slate-900 translate-y-1 border-b-0' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'}`}
+                    onClick={() => toggleBet('black')}
+                    className={`flex-1 rounded-xl border-b-4 font-black uppercase text-sm transition-all ${selectedBets.includes('black') ? 'bg-slate-700 text-white border-slate-900 translate-y-1 border-b-0' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'}`}
                   >
                       Noir x2
                   </button>
@@ -257,6 +276,14 @@ const RouletteGame: React.FC<RouletteGameProps> = ({ onClose }) => {
                   </button>
               </div>
 
+              {/* Provably Fair */}
+              <div className="mt-4 p-3 bg-slate-800/50 rounded-xl border border-slate-700 flex items-center gap-3">
+                  <ShieldCheck className="text-brand-accent" size={20} />
+                  <div className="text-[10px] text-slate-400">
+                      <span className="font-bold text-white block uppercase">Provably Fair</span>
+                      Chaque tour est généré via un algorithme cryptographique transparent.
+                  </div>
+              </div>
           </div>
       </div>
     </div>

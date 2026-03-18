@@ -78,6 +78,49 @@ const NewsHub: React.FC = () => {
     });
     const [isUploading, setIsUploading] = useState(false);
 
+    const [bookmarkedArticles, setBookmarkedArticles] = useState<string[]>([]);
+    const [comments, setComments] = useState<{[key: string]: {user: string, text: string, time: string}[]}>({});
+    const [newComment, setNewComment] = useState("");
+
+    const toggleBookmark = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        setBookmarkedArticles(prev => 
+            prev.includes(id) ? prev.filter(aid => aid !== id) : [...prev, id]
+        );
+    };
+
+    const handleAddComment = (articleId: string) => {
+        if (!newComment.trim()) return;
+        const comment = {
+            user: "Vous",
+            text: newComment,
+            time: "À l'instant"
+        };
+        setComments(prev => ({
+            ...prev,
+            [articleId]: [comment, ...(prev[articleId] || [])]
+        }));
+        setNewComment("");
+    };
+
+    const handleShare = (e: React.MouseEvent, article: typeof NEWS_DATA[0]) => {
+        e.stopPropagation();
+        if (navigator.share) {
+            navigator.share({
+                title: article.title,
+                text: article.summary,
+                url: window.location.href
+            }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(`${article.title} - ${window.location.href}`);
+            alert("Lien copié !");
+        }
+    };
+
+    const handleNewsletter = () => {
+        alert("Félicitations ! Vous êtes maintenant inscrit à Orange Sport Info. Vous recevrez les alertes par SMS.");
+    };
+
     const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -177,6 +220,7 @@ const NewsHub: React.FC = () => {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3 text-slate-300 text-xs">
                                 <span className="flex items-center gap-1"><Clock size={12}/> {filteredNews[0].time}</span>
+                                <span className="text-brand-accent/60 font-bold">• 5 min</span>
                                 <span className="flex items-center gap-1"><TrendingUp size={12}/> {filteredNews[0].reads} lectures</span>
                             </div>
                             <div className="bg-white/10 p-2 rounded-lg backdrop-blur-sm">
@@ -212,12 +256,19 @@ const NewsHub: React.FC = () => {
                             <div>
                                 <div className="flex justify-between items-start">
                                     <span className="text-[10px] font-black text-brand-accent uppercase">{news.category}</span>
-                                    <Bookmark size={14} className="text-slate-600 hover:text-brand-accent transition-colors" />
+                                    <Bookmark 
+                                        size={14} 
+                                        onClick={(e) => toggleBookmark(e, news.id)}
+                                        className={`transition-colors ${bookmarkedArticles.includes(news.id) ? 'text-brand-accent fill-brand-accent' : 'text-slate-600 hover:text-brand-accent'}`} 
+                                    />
                                 </div>
                                 <h4 className="text-white font-bold text-sm line-clamp-2 group-hover:text-brand-accent transition-colors mt-1">{news.title}</h4>
                             </div>
                             <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold">
-                                <span className="flex items-center gap-1"><Clock size={10}/> {news.time}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="flex items-center gap-1"><Clock size={10}/> {news.time}</span>
+                                    <span className="text-brand-accent/40">• 3 min</span>
+                                </div>
                                 <div className="flex items-center gap-1">
                                     <span>{news.reads}</span>
                                     <ChevronRight size={14} />
@@ -254,7 +305,12 @@ const NewsHub: React.FC = () => {
                         placeholder="Votre numéro..." 
                         className="flex-1 bg-brand-900 border border-brand-700 rounded-xl px-4 py-3 text-white text-sm focus:border-brand-accent outline-none"
                     />
-                    <button className="bg-brand-accent text-brand-900 font-black px-6 py-3 rounded-xl text-xs uppercase shadow-lg shadow-brand-accent/20 active:scale-95 transition-transform">S'abonner</button>
+                    <button 
+                        onClick={handleNewsletter}
+                        className="bg-brand-accent text-brand-900 font-black px-6 py-3 rounded-xl text-xs uppercase shadow-lg shadow-brand-accent/20 active:scale-95 transition-transform"
+                    >
+                        S'abonner
+                    </button>
                 </div>
             </div>
 
@@ -330,7 +386,10 @@ const NewsHub: React.FC = () => {
                             >
                                 <ChevronRight size={24} className="rotate-180" />
                             </button>
-                            <button className="absolute top-4 right-4 bg-black/50 backdrop-blur-md p-2 rounded-full text-white z-10">
+                            <button 
+                                onClick={(e) => handleShare(e, selectedArticle)}
+                                className="absolute top-4 right-4 bg-black/50 backdrop-blur-md p-2 rounded-full text-white z-10"
+                            >
                                 <Share2 size={20} />
                             </button>
                         </div>
@@ -351,9 +410,87 @@ const NewsHub: React.FC = () => {
                             <p className="text-slate-300 text-sm leading-relaxed font-medium">
                                 {selectedArticle.content}
                             </p>
-                            <div className="bg-brand-800 p-4 rounded-2xl border border-brand-700 mt-6">
-                                <p className="text-white font-bold text-sm mb-2">Parier sur ce match ?</p>
-                                <button className="w-full bg-brand-accent text-brand-900 font-black py-3 rounded-xl text-xs uppercase shadow-lg">Voir les cotes</button>
+
+                            {/* Betting Integration */}
+                             <div className="bg-brand-800 p-4 rounded-2xl border border-brand-700 mt-6 shadow-lg">
+                                <div className="flex justify-between items-center mb-3">
+                                    <p className="text-white font-black text-sm uppercase italic">Cotes du Match</p>
+                                    <span className="text-[10px] font-bold text-brand-accent uppercase">Live Odds</span>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2 mb-4">
+                                    <div className="bg-brand-900 p-2 rounded-lg border border-brand-700 text-center">
+                                        <div className="text-[10px] text-slate-500 font-bold uppercase mb-1">1</div>
+                                        <div className="text-brand-accent font-black">2.15</div>
+                                    </div>
+                                    <div className="bg-brand-900 p-2 rounded-lg border border-brand-700 text-center">
+                                        <div className="text-[10px] text-slate-500 font-bold uppercase mb-1">X</div>
+                                        <div className="text-brand-accent font-black">3.40</div>
+                                    </div>
+                                    <div className="bg-brand-900 p-2 rounded-lg border border-brand-700 text-center">
+                                        <div className="text-[10px] text-slate-500 font-bold uppercase mb-1">2</div>
+                                        <div className="text-brand-accent font-black">3.10</div>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => alert("Match ajouté au coupon !")}
+                                    className="w-full bg-brand-accent text-brand-900 font-black py-3 rounded-xl text-xs uppercase shadow-lg active:scale-95 transition-transform"
+                                >
+                                    Parier sur ce match
+                                </button>
+                            </div>
+
+                            {/* Related Articles */}
+                            <div className="mt-8">
+                                <h4 className="text-white font-black uppercase italic text-sm mb-4">Articles Similaires</h4>
+                                <div className="space-y-3">
+                                    {NEWS_DATA.filter(a => a.id !== selectedArticle.id && a.category === selectedArticle.category).slice(0, 2).map(related => (
+                                        <div 
+                                            key={related.id}
+                                            onClick={() => setSelectedArticle(related)}
+                                            className="flex gap-3 bg-brand-800/50 p-2 rounded-xl border border-brand-700 cursor-pointer hover:border-brand-accent/30 transition-all"
+                                        >
+                                            <img src={related.image} className="w-16 h-16 rounded-lg object-cover" alt="related" referrerPolicy="no-referrer" />
+                                            <div className="flex-1">
+                                                <h5 className="text-white text-xs font-bold line-clamp-2">{related.title}</h5>
+                                                <span className="text-[10px] text-slate-500">{related.time}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Comments Section */}
+                            <div className="mt-8 pb-12">
+                                <h4 className="text-white font-black uppercase italic text-sm mb-4">Commentaires ({comments[selectedArticle.id]?.length || 0})</h4>
+                                <div className="flex gap-2 mb-6">
+                                    <input 
+                                        type="text" 
+                                        value={newComment}
+                                        onChange={(e) => setNewComment(e.target.value)}
+                                        placeholder="Votre avis..." 
+                                        className="flex-1 bg-brand-800 border border-brand-700 rounded-xl px-4 py-2 text-white text-sm focus:border-brand-accent outline-none"
+                                    />
+                                    <button 
+                                        onClick={() => handleAddComment(selectedArticle.id)}
+                                        className="bg-brand-accent text-brand-900 p-2 rounded-xl"
+                                    >
+                                        <Send size={20} />
+                                    </button>
+                                </div>
+                                <div className="space-y-4">
+                                    {(comments[selectedArticle.id] || []).map((comment, idx) => (
+                                        <div key={idx} className="bg-brand-800/30 p-3 rounded-xl border border-brand-700">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-brand-accent text-[10px] font-black uppercase">{comment.user}</span>
+                                                <span className="text-slate-600 text-[10px]">{comment.time}</span>
+                                            </div>
+                                            <p className="text-slate-300 text-xs">{comment.text}</p>
+                                        </div>
+                                    ))}
+                                    {(!comments[selectedArticle.id] || comments[selectedArticle.id].length === 0) && (
+                                        <p className="text-center text-slate-600 text-xs py-4 italic">Soyez le premier à commenter !</p>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>

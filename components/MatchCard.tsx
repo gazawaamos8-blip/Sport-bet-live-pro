@@ -206,6 +206,44 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
             </button>
           </div>
 
+          {/* Over/Under 2.5 Market */}
+          <div className="grid grid-cols-2 gap-2 mt-2">
+              <button 
+                onClick={() => !isSelectionLocked('over2.5') && onAddToSlip?.({ 
+                  matchId: match.id, 
+                  selection: 'over2.5', 
+                  odds: 1.85, 
+                  matchInfo: `${match.homeTeam} vs ${match.awayTeam}`, 
+                  league: match.league,
+                  sport: match.sport,
+                  countryCode: match.countryCode,
+                  homeCountryCode: match.homeCountryCode,
+                  awayCountryCode: match.awayCountryCode
+                })}
+                className={`flex justify-between items-center bg-brand-900 hover:bg-brand-700 px-4 py-2.5 rounded-xl border border-brand-700 transition-all hover:border-brand-accent active:scale-95 group/btn ${isSelectionLocked('over2.5') ? 'opacity-30 cursor-not-allowed' : ''}`}
+              >
+                <span className="text-[10px] text-slate-500 font-bold uppercase group-hover/btn:text-brand-accent transition-colors">Plus (2.5)</span>
+                <span className="text-sm font-black text-white">1.85</span>
+              </button>
+              <button 
+                onClick={() => !isSelectionLocked('under2.5') && onAddToSlip?.({ 
+                  matchId: match.id, 
+                  selection: 'under2.5', 
+                  odds: 1.95, 
+                  matchInfo: `${match.homeTeam} vs ${match.awayTeam}`, 
+                  league: match.league,
+                  sport: match.sport,
+                  countryCode: match.countryCode,
+                  homeCountryCode: match.homeCountryCode,
+                  awayCountryCode: match.awayCountryCode
+                })}
+                className={`flex justify-between items-center bg-brand-900 hover:bg-brand-700 px-4 py-2.5 rounded-xl border border-brand-700 transition-all hover:border-brand-accent active:scale-95 group/btn ${isSelectionLocked('under2.5') ? 'opacity-30 cursor-not-allowed' : ''}`}
+              >
+                <span className="text-[10px] text-slate-500 font-bold uppercase group-hover/btn:text-brand-accent transition-colors">Moins (2.5)</span>
+                <span className="text-sm font-black text-white">1.95</span>
+              </button>
+          </div>
+
           {match.doubleChance && (
             <div className="flex justify-center mt-1">
               <button 

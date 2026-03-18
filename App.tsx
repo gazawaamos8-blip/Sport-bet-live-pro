@@ -17,6 +17,7 @@ import SupportModal from './components/SupportModal';
 import UpcomingMatches from './components/UpcomingMatches';
 import AboutModal from './components/AboutModal';
 import ScoreTicker from './components/ScoreTicker';
+import LiveScoreDashboard from './components/LiveScoreDashboard';
 import Sidebar from './components/Sidebar';
 import CouponList from './components/CouponList';
 import TransactionHistory from './components/TransactionHistory';
@@ -31,7 +32,8 @@ import SearchPage from './components/SearchPage';
 import PaymentVerificationGate from './components/PaymentVerificationGate';
 import MonetizationModal from './components/MonetizationModal';
 import { BetSlipItem, AppSection, PlacedBet, User, Match } from './types';
-import { Home, Trophy, Ticket, Activity, Tv, Gamepad2, AlertTriangle, PartyPopper, Calendar, Minus, Plus, Save, X, Menu, BrainCircuit, Sparkles, Share2, QrCode } from 'lucide-react';
+import { Home, Trophy, Ticket, Activity, Tv, Gamepad2, AlertTriangle, PartyPopper, Calendar, Minus, Plus, Save, X, Menu, BrainCircuit, Sparkles, Share2, QrCode, Download, RotateCw, Circle } from 'lucide-react';
+import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchMatches, subscribeToMatchUpdates, checkBetResults } from './services/sportApiService';
 import { db } from './services/database';
@@ -41,6 +43,7 @@ import { getMatchOfTheDayInsight } from './services/geminiService';
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [balance, setBalance] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Navigation
   const [currentSection, setCurrentSection] = useState<AppSection>(AppSection.AUTH);
@@ -64,6 +67,7 @@ const App = () => {
   const [allMatches, setAllMatches] = useState<Match[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [showQrModal, setShowQrModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
   // AI Insight State
@@ -80,7 +84,16 @@ const App = () => {
     const unsubscribe = db.subscribeToBalance((newBal) => {
         setBalance(newBal);
     });
-    return () => unsubscribe();
+
+    // Simulate initial app loading
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(timer);
+    };
   }, []);
 
   // Fetch Matches & AI Insight
@@ -241,6 +254,98 @@ const App = () => {
     setTimeout(() => setNotification(null), 4000);
   };
 
+  const downloadQrCode = () => {
+    const canvas = document.getElementById('coupon-qr-code-canvas') as HTMLCanvasElement;
+    if (!canvas) return;
+    try {
+        const pngFile = canvas.toDataURL('image/png');
+        const downloadLink = document.createElement('a');
+        downloadLink.download = `coupon-${generatedCode}.png`;
+        downloadLink.href = pngFile;
+        downloadLink.click();
+    } catch (e) {
+        console.error("Error downloading QR:", e);
+    }
+  };
+
+  if (isLoading) {
+    const ballIcons = [
+        <div className="text-white"><Circle size={24} fill="currentColor" /></div>, // Football
+        <div className="text-orange-500"><Circle size={24} fill="currentColor" /></div>, // Basketball
+        <div className="text-yellow-400"><Circle size={24} fill="currentColor" /></div>, // Tennis
+        <div className="text-brand-accent"><Circle size={24} fill="currentColor" /></div>, // Volley
+    ];
+
+    return (
+      <div className="min-h-screen bg-brand-900 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <div className="absolute top-[-20%] left-[-20%] w-[80vw] h-[80vw] bg-brand-accent/20 rounded-full blur-[80px] animate-pulse-slow"></div>
+          <div className="absolute bottom-[-20%] right-[-20%] w-[80vw] h-[80vw] bg-purple-600/20 rounded-full blur-[80px] animate-pulse-slow"></div>
+        </div>
+        
+        <div className="relative z-10 flex flex-col items-center animate-fade-in">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-brand-accent blur-2xl opacity-20 animate-pulse"></div>
+            <img 
+              src="https://raw.githubusercontent.com/gazawaamos8-blip/Mon-icon-/refs/heads/main/sportbot-icon.png" 
+              alt="SportBot Logo" 
+              className="w-32 h-32 object-contain drop-shadow-2xl animate-float relative z-10"
+              referrerPolicy="no-referrer"
+            />
+            
+            {/* Rotating Balls Loader */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                {ballIcons.map((icon, i) => (
+                    <motion.div
+                        key={i}
+                        className="absolute"
+                        animate={{ 
+                            rotate: 360
+                        }}
+                        transition={{ 
+                            duration: 4, 
+                            repeat: Infinity, 
+                            ease: "linear",
+                            delay: i * 0.5
+                        }}
+                        style={{
+                            width: 160,
+                            height: 160,
+                        }}
+                    >
+                        <motion.div
+                            animate={{ rotate: -360 }}
+                            transition={{ duration: 4, repeat: Infinity, ease: "linear", delay: i * 0.5 }}
+                            className="absolute top-0 left-1/2 -translate-x-1/2"
+                        >
+                            {icon}
+                        </motion.div>
+                    </motion.div>
+                ))}
+            </div>
+            
+            <div className="absolute -inset-4 border-2 border-brand-accent/30 rounded-full animate-spin-slow"></div>
+            <div className="absolute -inset-8 border border-brand-accent/10 rounded-full animate-reverse-spin"></div>
+          </div>
+          
+          <h1 className="text-5xl font-black italic text-white tracking-tighter mb-2 drop-shadow-lg">
+            SPORT<span className="text-brand-accent">BET</span>
+          </h1>
+          
+          <div className="w-48 h-1 bg-brand-800 rounded-full mt-8 overflow-hidden relative">
+            <motion.div 
+              className="absolute inset-y-0 left-0 bg-brand-accent"
+              initial={{ width: "0%" }}
+              animate={{ width: "100%" }}
+              transition={{ duration: 2, ease: "easeInOut" }}
+            />
+          </div>
+          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-4 animate-pulse">Chargement sécurisé...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (currentSection === AppSection.AUTH) {
       return <AuthScreen onLogin={handleLogin} />;
   }
@@ -288,6 +393,7 @@ const App = () => {
              <>
                {!searchQuery && <Carousel />}
                {!searchQuery && <ScoreTicker matches={allMatches} />}
+               {!searchQuery && <LiveScoreDashboard />}
                
                {/* Match of the Day AI Banner */}
                {!searchQuery && matchOfDay && (
@@ -469,15 +575,16 @@ const App = () => {
                     <div className="flex items-center gap-2">
                         <button 
                             onClick={() => {
-                                const code = prompt("Entrez le code du coupon :");
-                                if (code) {
-                                    const coupon = db.getCoupon(code);
-                                    if (coupon) handleLoadCoupon(coupon.items);
-                                    else showNotification("Coupon invalide !", 'error');
+                                if (generatedCode) {
+                                    setShowQrModal(true);
+                                } else {
+                                    const coupon = db.saveCoupon(betSlip);
+                                    setGeneratedCode(coupon.code);
+                                    setShowQrModal(true);
                                 }
                             }}
                             className="bg-brand-700 p-2 rounded-full text-slate-300 hover:text-white transition-colors"
-                            title="Charger un coupon"
+                            title="Afficher le QR Code"
                         >
                             <QrCode size={18}/>
                         </button>
@@ -491,7 +598,12 @@ const App = () => {
                           <div>
                               <p className="text-xs text-slate-500 font-bold uppercase">{item.matchInfo}</p>
                               <p className="text-sm font-bold text-white mt-1">
-                                  {item.selection === 'home' ? 'Victoire 1' : item.selection === 'away' ? 'Victoire 2' : 'Match Nul'}
+                                  {item.selection === 'home' ? 'Résultat Final (1)' : 
+                                   item.selection === 'away' ? 'Résultat Final (2)' : 
+                                   item.selection === 'draw' ? 'Résultat Final (X)' : 
+                                   item.selection === 'over2.5' ? 'Plus (2.5)' :
+                                   item.selection === 'under2.5' ? 'Moins (2.5)' :
+                                   item.selection}
                               </p>
                           </div>
                           <span className="bg-brand-900 text-brand-accent px-2 py-1 rounded font-bold">{item.odds}</span>
@@ -567,6 +679,59 @@ const App = () => {
         onLogout={handleLogout}
         balance={balance}
       />
+
+      {/* QR CODE MODAL */}
+      <AnimatePresence>
+        {showQrModal && generatedCode && (
+            <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
+                <motion.div 
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    className="bg-white p-8 rounded-3xl flex flex-col items-center gap-6 max-w-sm w-full relative"
+                >
+                    <button 
+                        onClick={() => setShowQrModal(false)}
+                        className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-900"
+                    >
+                        <X size={24} />
+                    </button>
+                    
+                    <h3 className="text-xl font-black text-slate-900 uppercase italic">Coupon QR Code</h3>
+                    
+                    <div className="relative bg-white p-4 rounded-2xl shadow-inner border border-slate-100">
+                        <QRCodeCanvas 
+                            id="coupon-qr-code-canvas"
+                            value={`https://sportbot.app/coupon/${generatedCode}`} 
+                            size={256}
+                            level="H"
+                            includeMargin={true}
+                            imageSettings={{
+                                src: "https://raw.githubusercontent.com/gazawaamos8-blip/Mon-icon-/refs/heads/main/sportbot-icon.png",
+                                x: undefined,
+                                y: undefined,
+                                height: 60,
+                                width: 60,
+                                excavate: true,
+                            }}
+                        />
+                    </div>
+                    
+                    <div className="text-center">
+                        <p className="text-slate-500 text-xs font-bold uppercase mb-1">Code du Coupon</p>
+                        <p className="text-2xl font-black text-brand-900 tracking-widest">{generatedCode}</p>
+                    </div>
+                    
+                    <button 
+                        onClick={downloadQrCode}
+                        className="w-full bg-brand-900 text-white py-4 rounded-xl font-black uppercase flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-transform"
+                    >
+                        <Download size={20} /> Télécharger le QR
+                    </button>
+                </motion.div>
+            </div>
+        )}
+      </AnimatePresence>
 
       <WalletModal isOpen={walletOpen} onClose={() => setWalletOpen(false)} onTransaction={handleTransaction} />
       <ProfileModal 

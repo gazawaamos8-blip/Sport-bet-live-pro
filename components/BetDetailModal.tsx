@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { PlacedBet } from '../types';
-import { ArrowLeft, CheckCircle, MoreVertical, Share2, Printer, Ticket, Download, XCircle, Clock, DollarSign, AlertCircle, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, CheckCircle, MoreVertical, Share2, Printer, Ticket, Download, XCircle, Clock, DollarSign, AlertCircle, ShieldAlert, QrCode } from 'lucide-react';
 import { t } from '../services/localization';
 import { getFlag } from '../services/sportApiService';
 import { db } from '../services/database';
+import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
 
 interface BetDetailModalProps {
   bet: PlacedBet;
@@ -12,31 +13,48 @@ interface BetDetailModalProps {
 }
 
 const BetDetailModal: React.FC<BetDetailModalProps> = ({ bet, onClose }) => {
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [showDemandeModal, setShowDemandeModal] = useState(false);
   const isPaid = bet.status === 'won';
   const isLost = bet.status === 'lost';
   const isPending = bet.status === 'pending';
 
   const calculateCashOut = (bet: PlacedBet) => {
-    const base = bet.potentialWin * 0.6;
-    const randomFactor = 0.8 + Math.random() * 0.4;
-    return Math.floor(base * randomFactor);
+    // Simulate if the user is "winning" or "losing" based on bet ID or random seed
+    const isWinning = (parseInt(bet.id.split('-')[1]) % 2 === 0);
+    
+    let base;
+    if (isWinning) {
+        // Winning: Offer more (70% - 90% of potential win)
+        base = bet.potentialWin * (0.7 + Math.random() * 0.2);
+    } else {
+        // Losing: Offer less (10% - 30% of potential win)
+        base = bet.potentialWin * (0.1 + Math.random() * 0.2);
+    }
+    
+    return Math.floor(base);
   };
 
+  const cashOutAmount = calculateCashOut(bet);
+
   const handleCashOut = async () => {
-    const cashOutAmount = calculateCashOut(bet);
-    const confirmMessage = `
-VENDRE VOTRE MATCH ?
--------------------
-Offre actuelle : ${cashOutAmount.toLocaleString()} F
-Gain potentiel : ${bet.potentialWin.toLocaleString()} F
+    await db.cashOutBet(bet.id, cashOutAmount);
+    onClose();
+  };
 
-Voulez-vous accepter cette offre ?
-    `;
-
-    if (window.confirm(confirmMessage)) {
-        await db.cashOutBet(bet.id, cashOutAmount);
-        alert(`Match vendu avec succès pour ${cashOutAmount.toLocaleString()} F !`);
-        onClose();
+  const handleDownloadQr = () => {
+    const canvas = document.getElementById('bet-qr-code-canvas') as HTMLCanvasElement;
+    if (!canvas) return;
+    
+    try {
+        const pngFile = canvas.toDataURL('image/png');
+        const downloadLink = document.createElement('a');
+        downloadLink.download = `QR-BET-${bet.id}.png`;
+        downloadLink.href = pngFile;
+        downloadLink.click();
+    } catch (e) {
+        console.error("Error downloading QR:", e);
+        alert("Erreur lors du téléchargement du QR Code. Veuillez réessayer.");
     }
   };
 
@@ -187,7 +205,14 @@ Statut: ${bet.status.toUpperCase()}
                         
                         <div className="flex justify-between items-center pt-4 border-t border-slate-100">
                             <div className="text-sm font-bold text-slate-600">
-                                Coupon: {item.selection === 'home' ? '1' : item.selection === 'away' ? '2' : item.selection === 'draw' ? 'X' : item.selection.replace('home', '1').replace('draw', 'X').replace('away', '2')}
+                                Coupon: {
+                                    item.selection === 'home' ? '1' : 
+                                    item.selection === 'away' ? '2' : 
+                                    item.selection === 'draw' ? 'X' : 
+                                    item.selection === 'over2.5' ? 'Plus (2.5)' :
+                                    item.selection === 'under2.5' ? 'Moins (2.5)' :
+                                    item.selection.replace('home', '1').replace('draw', 'X').replace('away', '2')
+                                }
                             </div>
                             <div className="font-bold text-slate-900 text-lg">{item.odds}</div>
                         </div>
@@ -202,18 +227,18 @@ Statut: ${bet.status.toUpperCase()}
       <div className="bg-white p-4 border-t border-slate-100 flex flex-col gap-3 print:hidden">
           {isPending && (
               <button 
-                onClick={handleCashOut}
+                onClick={() => setShowDemandeModal(true)}
                 className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-800 text-white font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl hover:from-blue-500 hover:to-blue-700 transition-all active:scale-95 mb-1"
               >
-                  <DollarSign size={20} /> Vendre Match ({calculateCashOut(bet).toLocaleString()} F)
+                  <DollarSign size={20} /> Demande
               </button>
           )}
           <div className="flex gap-3">
               <button 
-                onClick={handlePrint}
+                onClick={() => setShowQrModal(true)}
                 className="flex-1 py-3.5 rounded-xl border-2 border-slate-200 text-slate-600 font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
               >
-                  <Printer size={20} /> Imprimer
+                  <QrCode size={20} /> QR Code
               </button>
               
               <button 
@@ -227,10 +252,100 @@ Statut: ${bet.status.toUpperCase()}
                 onClick={handleDownload}
                 className="flex-1 py-3.5 rounded-xl bg-[#00e676] text-slate-900 font-bold flex items-center justify-center gap-2 hover:bg-[#00c853] transition-colors"
               >
-                  <Download size={20} /> Télécharger
+                  <Download size={20} /> Ticket
               </button>
           </div>
       </div>
+
+      {/* QR Code Modal */}
+      {showQrModal && (
+          <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in">
+              <div className="bg-white w-full max-w-sm rounded-3xl p-8 flex flex-col items-center text-center shadow-2xl">
+                  <div className="w-full flex justify-between items-center mb-6">
+                      <h3 className="text-xl font-black text-slate-900 uppercase italic">QR Coupon</h3>
+                      <button onClick={() => setShowQrModal(false)} className="p-2 bg-slate-100 rounded-full text-slate-500">
+                          <XCircle size={24} />
+                      </button>
+                  </div>
+                  
+                  <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-100 mb-6 relative">
+                      <QRCodeCanvas 
+                          id="bet-qr-code-canvas"
+                          value={`https://sportbot.app/coupon/${bet.id}`}
+                          size={256}
+                          level="H"
+                          includeMargin={true}
+                          imageSettings={{
+                              src: "https://raw.githubusercontent.com/gazawaamos8-blip/Mon-icon-/refs/heads/main/sportbot-icon.png",
+                              x: undefined,
+                              y: undefined,
+                              height: 60,
+                              width: 60,
+                              excavate: true,
+                          }}
+                      />
+                  </div>
+
+                  <p className="text-slate-500 text-sm mb-8 font-medium">
+                      Scannez ce code pour charger ce coupon sur un autre appareil.
+                  </p>
+
+                  <button 
+                      onClick={handleDownloadQr}
+                      className="w-full bg-brand-accent text-brand-900 font-black py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg active:scale-95 transition-transform"
+                  >
+                      <Download size={20} /> Télécharger QR
+                  </button>
+              </div>
+          </div>
+      )}
+      {/* Demande Info Modal */}
+      {showDemandeModal && (
+          <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in">
+              <div className="bg-white w-full max-w-sm rounded-3xl p-8 flex flex-col shadow-2xl">
+                  <div className="w-full flex justify-between items-center mb-6">
+                      <h3 className="text-xl font-black text-slate-900 uppercase italic">Informations Pari</h3>
+                      <button onClick={() => setShowDemandeModal(false)} className="p-2 bg-slate-100 rounded-full text-slate-500">
+                          <XCircle size={24} />
+                      </button>
+                  </div>
+                  
+                  <div className="space-y-4 mb-8">
+                      <div className="flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-100">
+                          <span className="text-slate-500 font-bold">Cote :</span>
+                          <span className="text-slate-900 font-black text-lg">{bet.totalOdds}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-100">
+                          <span className="text-slate-500 font-bold">Mise :</span>
+                          <span className="text-slate-900 font-black text-lg">{bet.stake.toLocaleString()} F</span>
+                      </div>
+                      <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl border border-blue-100">
+                          <span className="text-blue-600 font-bold">Gains Possibles :</span>
+                          <span className="text-blue-700 font-black text-xl">{bet.potentialWin.toLocaleString()} F</span>
+                      </div>
+                  </div>
+
+                  <p className="text-slate-500 text-xs mb-8 text-center leading-relaxed">
+                      En acceptant, le montant du rachat sera immédiatement crédité sur votre solde SportBot.
+                  </p>
+
+                  <div className="flex flex-col gap-3">
+                      <button 
+                          onClick={handleCashOut}
+                          className="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg active:scale-95 transition-transform uppercase tracking-widest"
+                      >
+                          Accepter ({cashOutAmount.toLocaleString()} F)
+                      </button>
+                      <button 
+                          onClick={() => setShowDemandeModal(false)}
+                          className="w-full bg-slate-100 text-slate-500 font-bold py-3 rounded-2xl transition-colors"
+                      >
+                          Annuler
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 };
