@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Gift, Sparkles, Zap, Clock, ChevronRight, CheckCircle2, Trophy, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../services/database';
+import ShopModal from './ShopModal';
 
 interface Promotion {
     id: string;
@@ -66,6 +67,7 @@ const PromotionsHub: React.FC = () => {
     const [promos, setPromos] = useState<Promotion[]>(PROMOTIONS_DATA);
     const [selectedPromo, setSelectedPromo] = useState<Promotion | null>(null);
     const [claiming, setClaiming] = useState<string | null>(null);
+    const [showShop, setShowShop] = useState(false);
 
     const handleClaim = (id: string) => {
         setClaiming(id);
@@ -171,11 +173,19 @@ const PromotionsHub: React.FC = () => {
                         </div>
                         <span className="text-[10px] font-black text-white">650 / 1000 pts</span>
                     </div>
-                    <button className="w-full bg-white/10 backdrop-blur-md text-white font-bold py-2 rounded-xl text-xs uppercase border border-white/20 flex items-center justify-center gap-2">
+                    <button 
+                        onClick={() => setShowShop(true)}
+                        className="w-full bg-white/10 backdrop-blur-md text-white font-bold py-2 rounded-xl text-xs uppercase border border-white/20 flex items-center justify-center gap-2 hover:bg-white/20 transition-all"
+                    >
                         Voir ma boutique <ChevronRight size={14} />
                     </button>
                 </div>
             </div>
+
+            {/* Shop Modal */}
+            <AnimatePresence>
+                {showShop && <ShopModal onClose={() => setShowShop(false)} />}
+            </AnimatePresence>
 
             {/* Promo Modal */}
             <AnimatePresence>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sportbet-pro-v1';
+const CACHE_NAME = 'sportbot-pro-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

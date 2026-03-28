@@ -109,6 +109,14 @@ export const MOCK_MATCHES: Match[] = [
     status: 'live',
     odds: { home: 1.45, draw: 4.20, away: 6.50 },
     doubleChance: { homeDraw: 1.12, homeAway: 1.25, drawAway: 2.80 },
+    extraOdds: {
+      'injuriesOver1.5': 1.85,
+      'injuriesUnder1.5': 1.95,
+      'cardsOver3.5': 1.70,
+      'cardsUnder3.5': 2.10,
+      'yellowCardsOver2.5': 1.65,
+      'redCardYes': 3.50
+    },
     homeLogo: "https://picsum.photos/100/100?random=10",
     awayLogo: "https://picsum.photos/100/100?random=101",
     startDate: new Date()

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './components/Navbar';
 import Carousel from './components/Carousel';
 import MatchList from './components/MatchList';
@@ -17,7 +17,6 @@ import SupportModal from './components/SupportModal';
 import UpcomingMatches from './components/UpcomingMatches';
 import AboutModal from './components/AboutModal';
 import ScoreTicker from './components/ScoreTicker';
-import LiveScoreDashboard from './components/LiveScoreDashboard';
 import Sidebar from './components/Sidebar';
 import CouponList from './components/CouponList';
 import TransactionHistory from './components/TransactionHistory';
@@ -31,11 +30,13 @@ import AppInstallPrompt from './components/AppInstallPrompt';
 import SearchPage from './components/SearchPage';
 import PaymentVerificationGate from './components/PaymentVerificationGate';
 import MonetizationModal from './components/MonetizationModal';
+import LiveScoreDashboard from './components/LiveScoreDashboard';
 import { BetSlipItem, AppSection, PlacedBet, User, Match } from './types';
-import { Home, Trophy, Ticket, Activity, Tv, Gamepad2, AlertTriangle, PartyPopper, Calendar, Minus, Plus, Save, X, Menu, BrainCircuit, Sparkles, Share2, QrCode, Download, RotateCw, Circle } from 'lucide-react';
+import BrandIcon from './components/BrandIcon';
+import { Home, Trophy, Ticket, Activity, Tv, Gamepad2, AlertTriangle, PartyPopper, Calendar, Minus, Plus, Save, X, Menu, BrainCircuit, Sparkles, Share2, QrCode, Download, RotateCw, Circle, Zap, HeartHandshake, TrendingUp, MessageCircle } from 'lucide-react';
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { fetchMatches, subscribeToMatchUpdates, checkBetResults } from './services/sportApiService';
+import { fetchMatches, subscribeToMatchUpdates, checkBetResults, getFlag } from './services/sportApiService';
 import { db } from './services/database';
 import { t, setAppLanguage, getAppLanguage } from './services/localization';
 import { getMatchOfTheDayInsight } from './services/geminiService';
@@ -47,6 +48,7 @@ const App = () => {
   
   // Navigation
   const [currentSection, setCurrentSection] = useState<AppSection>(AppSection.AUTH);
+  const [showVipDetails, setShowVipDetails] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Modals
@@ -68,10 +70,14 @@ const App = () => {
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
+  const qrRef = useRef<HTMLCanvasElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   
   // AI Insight State
   const [matchOfDay, setMatchOfDay] = useState<{title: string, insight: string} | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   // --- INITIALIZATION ---
   useEffect(() => {
@@ -85,14 +91,50 @@ const App = () => {
         setBalance(newBal);
     });
 
-    // Simulate initial app loading
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2500);
+    // Simulate initial app loading with progress
+    const interval = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setTimeout(() => setIsLoading(false), 500);
+          return 100;
+        }
+        const increment = Math.random() * 15;
+        return Math.min(prev + increment, 100);
+      });
+    }, 300);
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    const handleOpenCasino = (e: any) => {
+      setCurrentSection(AppSection.CASINO);
+      if (e.detail) {
+        // Handle specific game if needed
+      }
+    };
+    window.addEventListener('open-casino', handleOpenCasino);
+
+    const handleAddToSlip = (e: any) => {
+      addToSlip(e.detail);
+    };
+    window.addEventListener('add-to-slip', handleAddToSlip);
+
+    const handleShowNotif = (e: any) => {
+      showNotification(e.detail.msg, e.detail.type);
+    };
+    window.addEventListener('show-notification', handleShowNotif);
 
     return () => {
       unsubscribe();
-      clearTimeout(timer);
+      clearInterval(interval);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('open-casino', handleOpenCasino);
+      window.removeEventListener('add-to-slip', handleAddToSlip);
+      window.removeEventListener('show-notification', handleShowNotif);
     };
   }, []);
 
@@ -167,7 +209,9 @@ const App = () => {
   // --- SEARCH ---
   const handleSearch = (query: string) => {
       setSearchQuery(query);
-      setIsSearchOpen(true);
+      if (query.trim()) {
+        setIsSearchOpen(true);
+      }
   };
 
   // --- BETTING LOGIC ---
@@ -255,7 +299,7 @@ const App = () => {
   };
 
   const downloadQrCode = () => {
-    const canvas = document.getElementById('coupon-qr-code-canvas') as HTMLCanvasElement;
+    const canvas = qrRef.current;
     if (!canvas) return;
     try {
         const pngFile = canvas.toDataURL('image/png');
@@ -263,85 +307,42 @@ const App = () => {
         downloadLink.download = `coupon-${generatedCode}.png`;
         downloadLink.href = pngFile;
         downloadLink.click();
+        
+        showNotification("QR Code téléchargé avec succès !", "win");
     } catch (e) {
         console.error("Error downloading QR:", e);
+        showNotification("Erreur lors du téléchargement. Réessayez.", "loss");
     }
   };
 
   if (isLoading) {
-    const ballIcons = [
-        <div className="text-white"><Circle size={24} fill="currentColor" /></div>, // Football
-        <div className="text-orange-500"><Circle size={24} fill="currentColor" /></div>, // Basketball
-        <div className="text-yellow-400"><Circle size={24} fill="currentColor" /></div>, // Tennis
-        <div className="text-brand-accent"><Circle size={24} fill="currentColor" /></div>, // Volley
-    ];
-
     return (
       <div className="min-h-screen bg-brand-900 flex flex-col items-center justify-center p-6 relative overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <div className="absolute top-[-20%] left-[-20%] w-[80vw] h-[80vw] bg-brand-accent/20 rounded-full blur-[80px] animate-pulse-slow"></div>
-          <div className="absolute bottom-[-20%] right-[-20%] w-[80vw] h-[80vw] bg-purple-600/20 rounded-full blur-[80px] animate-pulse-slow"></div>
-        </div>
-        
-        <div className="relative z-10 flex flex-col items-center animate-fade-in">
-          <div className="relative mb-6">
-            <div className="absolute inset-0 bg-brand-accent blur-2xl opacity-20 animate-pulse"></div>
-            <img 
-              src="https://raw.githubusercontent.com/gazawaamos8-blip/Mon-icon-/refs/heads/main/sportbot-icon.png" 
-              alt="SportBot Logo" 
-              className="w-32 h-32 object-contain drop-shadow-2xl animate-float relative z-10"
-              referrerPolicy="no-referrer"
-            />
-            
-            {/* Rotating Balls Loader */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                {ballIcons.map((icon, i) => (
-                    <motion.div
-                        key={i}
-                        className="absolute"
-                        animate={{ 
-                            rotate: 360
-                        }}
-                        transition={{ 
-                            duration: 4, 
-                            repeat: Infinity, 
-                            ease: "linear",
-                            delay: i * 0.5
-                        }}
-                        style={{
-                            width: 160,
-                            height: 160,
-                        }}
-                    >
-                        <motion.div
-                            animate={{ rotate: -360 }}
-                            transition={{ duration: 4, repeat: Infinity, ease: "linear", delay: i * 0.5 }}
-                            className="absolute top-0 left-1/2 -translate-x-1/2"
-                        >
-                            {icon}
-                        </motion.div>
-                    </motion.div>
-                ))}
-            </div>
-            
-            <div className="absolute -inset-4 border-2 border-brand-accent/30 rounded-full animate-spin-slow"></div>
-            <div className="absolute -inset-8 border border-brand-accent/10 rounded-full animate-reverse-spin"></div>
+        {/* Decorative Background Elements */}
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-accent/10 rounded-full blur-[120px] pointer-events-none"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="relative z-10 flex flex-col items-center"
+        >
+          <div className="w-24 h-24 rounded-[2rem] bg-brand-accent/10 flex items-center justify-center mb-6 border border-brand-accent/20 shadow-[0_0_50px_rgba(0,230,118,0.2)]">
+            <BrandIcon size={64} />
           </div>
           
-          <h1 className="text-5xl font-black italic text-white tracking-tighter mb-2 drop-shadow-lg">
-            SPORT<span className="text-brand-accent">BET</span>
+          <h1 className="text-5xl font-black italic tracking-tighter mb-8 drop-shadow-lg">
+            <span className="text-brand-accent">bot</span>
           </h1>
           
-          <div className="w-48 h-1 bg-brand-800 rounded-full mt-8 overflow-hidden relative">
+          <div className="w-64 h-1.5 bg-brand-800 rounded-full overflow-hidden border border-brand-700 relative">
             <motion.div 
-              className="absolute inset-y-0 left-0 bg-brand-accent"
+              className="absolute inset-y-0 left-0 bg-brand-accent shadow-[0_0_15px_rgba(0,230,118,0.5)]"
               initial={{ width: "0%" }}
-              animate={{ width: "100%" }}
-              transition={{ duration: 2, ease: "easeInOut" }}
+              animate={{ width: `${loadingProgress}%` }}
             />
           </div>
-          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-4 animate-pulse">Chargement sécurisé...</p>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -354,7 +355,7 @@ const App = () => {
 
   return (
     <PaymentVerificationGate>
-      <div className="min-h-screen bg-brand-900 pb-20 relative overflow-hidden">
+      <div className="min-h-screen bg-brand-900 relative overflow-hidden">
       {/* Decorative Background Elements */}
       <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-accent/5 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/5 rounded-full blur-[120px] pointer-events-none"></div>
@@ -387,26 +388,31 @@ const App = () => {
 
       <div className="flex flex-col min-h-screen">
          {/* MAIN CONTENT AREA */}
-         <div className="flex-1 pb-24">
+         <div className="flex-1 pb-32">
            
            {currentSection === AppSection.HOME && (
              <>
-               {!searchQuery && <Carousel />}
+               {!searchQuery && <Carousel onNavigate={(section, videoId) => {
+                 if (videoId) setSelectedVideoId(videoId);
+                 setCurrentSection(section);
+               }} />}
                {!searchQuery && <ScoreTicker matches={allMatches} />}
-               {!searchQuery && <LiveScoreDashboard />}
+               
+               {!searchQuery && <LiveScoreDashboard onSelectMatch={setSelectedMatch} />}
                
                {/* Match of the Day AI Banner */}
                {!searchQuery && matchOfDay && (
-                   <div className="mx-3 mt-4 bg-gradient-to-r from-brand-800 to-brand-900 rounded-xl p-4 border border-brand-700 shadow-lg relative overflow-hidden">
-                       <div className="absolute top-0 right-0 p-3 opacity-10"><BrainCircuit size={80} className="text-brand-accent"/></div>
-                       <div className="flex items-start gap-3 relative z-10">
-                           <div className="bg-brand-accent p-2 rounded-full text-brand-900">
-                               <Sparkles size={20} className="animate-pulse" />
+                   <div className="mx-3 mt-4 bg-gradient-to-r from-brand-800 to-brand-900 rounded-xl p-2 border border-brand-700 shadow-lg relative overflow-hidden">
+                       <div className="absolute top-0 right-0 p-2 opacity-10"><BrainCircuit size={40} className="text-brand-accent"/></div>
+                       <div className="flex items-start gap-2 relative z-10">
+                           <BrandIcon size={32} className="shrink-0" />
+                           <div className="bg-brand-accent p-1 rounded-full text-brand-900">
+                               <Sparkles size={12} className="animate-pulse" />
                            </div>
                            <div>
-                               <p className="text-[10px] font-black uppercase text-brand-accent mb-1">Analyse Gemini 3 • Match du Jour</p>
-                               <h3 className="text-white font-bold text-sm mb-1">{matchOfDay.title}</h3>
-                               <p className="text-slate-300 text-xs italic">"{matchOfDay.insight}"</p>
+                               <p className="text-[8px] font-black uppercase text-brand-accent mb-0.5">Analyse Gemini 3 • Match du Jour</p>
+                               <h3 className="text-white font-bold text-xs mb-0.5">{matchOfDay.title}</h3>
+                               <p className="text-slate-300 text-[8px] italic leading-tight">"{matchOfDay.insight}"</p>
                            </div>
                        </div>
                    </div>
@@ -424,10 +430,10 @@ const App = () => {
                         <button 
                           key={btn.l} 
                           onClick={() => setCurrentSection(btn.s)}
-                          className="flex flex-col items-center justify-center bg-brand-800 p-3 rounded-xl border border-brand-700 shadow hover:bg-brand-700 active:scale-95 transition-all"
+                          className="flex flex-col items-center justify-center bg-brand-800 p-4 rounded-xl border border-brand-700 shadow-lg hover:bg-brand-700 active:scale-95 transition-all"
                         >
-                            <btn.i size={24} className={`mb-1 ${btn.c}`} />
-                            <span className="text-[10px] font-bold text-white uppercase">{btn.l}</span>
+                            <btn.i size={24} className={`mb-1.5 ${btn.c}`} />
+                            <span className="text-[10px] font-black text-white uppercase tracking-wider">{btn.l}</span>
                         </button>
                       ))}
                    </div>
@@ -445,73 +451,85 @@ const App = () => {
 
            {currentSection === AppSection.LIVE && (
               <div className="p-2">
-                  <h2 className="text-xl font-black text-white italic uppercase mb-4 flex items-center gap-2"><Activity className="text-red-500"/> En Direct</h2>
-                  <MatchList onAddToSlip={addToSlip} onOpenDetails={setSelectedMatch} />
+                  <h2 className="text-xl font-black text-white italic uppercase mb-4 flex items-center gap-2"><Activity className="text-red-500"/> LIVE</h2>
+                  <LiveScoreDashboard onSelectMatch={setSelectedMatch} />
+                  <div className="mt-6">
+                      <MatchList onAddToSlip={addToSlip} onOpenDetails={setSelectedMatch} />
+                  </div>
               </div>
            )}
 
            {currentSection === AppSection.UPCOMING && <UpcomingMatches onOpenDetails={setSelectedMatch} onAddToSlip={addToSlip} />}
            {currentSection === AppSection.CASINO && <CasinoHub searchQuery={searchQuery} />}
-           {currentSection === AppSection.VIDEO && <VideoHub matches={allMatches.filter(m => m.status === 'live')} />}
+           {currentSection === AppSection.VIDEO && <VideoHub matches={allMatches.filter(m => m.status === 'live')} initialVideoId={selectedVideoId} />}
            {currentSection === AppSection.RESULTS && <ResultsHub onOpenDetails={setSelectedMatch} />}
            {currentSection === AppSection.REFERRAL && <Referral />}
            {currentSection === AppSection.HISTORY && <BetHistory />}
            {currentSection === AppSection.COUPONS && <CouponList onLoadCoupon={handleLoadCoupon} />}
-           {currentSection === AppSection.TRANSACTIONS && <TransactionHistory />}
+           {currentSection === AppSection.TRANSACTIONS && <TransactionHistory onNavigate={setCurrentSection} />}
            {currentSection === AppSection.STATISTICS && <StatisticsView />}
            {currentSection === AppSection.RESPONSIBLE_GAMING && <ResponsibleGamingView />}
-           
-           {/* NEW SECTIONS */}
            {currentSection === AppSection.PROMOTIONS && <PromotionsHub />}
-
-           {currentSection === AppSection.VIP_CLUB && (
-               <div className="p-4 animate-fade-in text-center">
-                   <div className="w-20 h-20 bg-brand-highlight/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-brand-highlight">
-                       <Trophy size={40} className="text-brand-highlight" />
-                   </div>
-                   <h2 className="text-2xl font-black text-white italic uppercase mb-2">Club VIP SportBot</h2>
-                   <p className="text-slate-400 text-sm mb-6">Accédez à des avantages exclusifs, des retraits prioritaires et des bonus personnalisés.</p>
-                   <div className="grid grid-cols-2 gap-3">
-                       <div className="bg-brand-800 p-4 rounded-xl border border-brand-700">
-                           <p className="text-brand-highlight font-bold">BRONZE</p>
-                           <p className="text-[10px] text-slate-500">Niveau actuel</p>
-                       </div>
-                       <div className="bg-brand-800 p-4 rounded-xl border border-brand-700 opacity-50">
-                           <p className="text-slate-300 font-bold">SILVER</p>
-                           <p className="text-[10px] text-slate-500">Prochain niveau</p>
-                       </div>
-                   </div>
-               </div>
-           )}
-
-           {currentSection === AppSection.STATISTICS && (
-               <div className="p-4 animate-fade-in">
-                   <h2 className="text-xl font-black text-white italic uppercase mb-4 flex items-center gap-2">📊 Statistiques Pro</h2>
-                   <div className="bg-brand-800 rounded-2xl p-6 border border-brand-700 text-center">
-                       <Activity size={48} className="text-cyan-400 mx-auto mb-4" />
-                       <p className="text-white font-bold">Analyse de Forme</p>
-                       <p className="text-slate-400 text-xs mt-2">Consultez les statistiques détaillées des équipes avant de parier.</p>
-                       <button className="mt-4 w-full bg-brand-700 text-white py-3 rounded-xl font-bold text-sm">Explorer les Stats</button>
-                   </div>
-               </div>
-           )}
-
-           {currentSection === AppSection.RESPONSIBLE_GAMING && (
-               <div className="p-4 animate-fade-in">
-                   <h2 className="text-xl font-black text-white italic uppercase mb-4 flex items-center gap-2">🛡️ Jeu Responsable</h2>
-                   <div className="bg-brand-800 rounded-2xl p-5 border border-brand-700 space-y-4">
-                       <p className="text-slate-300 text-sm">Le jeu doit rester un plaisir. Fixez-vous des limites et jouez de manière responsable.</p>
-                       <div className="space-y-2">
-                           <button className="w-full bg-brand-900 border border-brand-700 text-white py-3 rounded-xl text-sm font-bold">Limites de Dépôt</button>
-                           <button className="w-full bg-brand-900 border border-brand-700 text-white py-3 rounded-xl text-sm font-bold">Auto-Exclusion</button>
-                       </div>
-                   </div>
-               </div>
-           )}
-
-           {currentSection === AppSection.NEWS && <NewsHub />}
+           {currentSection === AppSection.NEWS && <NewsHub globalSearchQuery={searchQuery} />}
            {currentSection === AppSection.LEADERBOARD && <Leaderboard />}
            {currentSection === AppSection.ASSISTANT && <AssistantView />}
+
+           {currentSection === AppSection.VIP_CLUB && (
+               <div className="p-4 animate-fade-in space-y-6 pb-24">
+                   <div className="relative bg-gradient-to-br from-brand-700 to-brand-900 rounded-3xl p-8 border border-brand-500/50 shadow-2xl overflow-hidden">
+                       <div className="absolute top-0 right-0 p-4 opacity-10">
+                           <Trophy size={120} className="text-brand-highlight" />
+                       </div>
+                       <div className="relative z-10 flex flex-col items-center text-center">
+                           <div className="w-24 h-24 bg-brand-highlight/20 rounded-full flex items-center justify-center mb-4 border-4 border-brand-highlight shadow-[0_0_30px_rgba(255,184,0,0.3)]">
+                               <Trophy size={48} className="text-brand-highlight" />
+                           </div>
+                           <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter mb-2">Club VIP <span className="text-brand-highlight">SportBot</span></h2>
+                           <p className="text-slate-300 text-xs font-bold uppercase tracking-widest mb-6">L'Excellence du Pari Sportif</p>
+                           
+                           <div className="w-full bg-black/40 rounded-2xl p-4 border border-white/5 backdrop-blur-md">
+                               <div className="flex justify-between items-end mb-2">
+                                   <span className="text-[10px] font-black text-brand-highlight uppercase">Niveau Actuel: BRONZE</span>
+                                   <span className="text-[10px] font-black text-slate-500 uppercase">Prochain: SILVER (75%)</span>
+                               </div>
+                               <div className="w-full h-3 bg-brand-900 rounded-full overflow-hidden border border-white/5">
+                                   <motion.div 
+                                       initial={{ width: 0 }}
+                                       animate={{ width: '75%' }}
+                                       className="h-full bg-gradient-to-r from-brand-highlight to-yellow-500 shadow-[0_0_15px_rgba(255,184,0,0.5)]"
+                                   />
+                               </div>
+                           </div>
+                       </div>
+                   </div>
+
+                   <div className="grid grid-cols-1 gap-4">
+                       {[
+                           { title: 'Retraits Prioritaires', desc: 'Vos gains sur votre compte en moins de 5 minutes.', icon: Zap, color: 'text-yellow-400' },
+                           { title: 'Bonus Hebdomadaire', desc: 'Recevez 5% de cashback sur vos mises chaque lundi.', icon: PartyPopper, color: 'text-brand-accent' },
+                           { title: 'Manager Dédié', desc: 'Un conseiller personnel disponible 24/7 sur WhatsApp.', icon: HeartHandshake, color: 'text-blue-400' },
+                           { title: 'Cotes Boostées', desc: 'Accès exclusif à des cotes augmentées de +15%.', icon: TrendingUp, color: 'text-purple-400' },
+                       ].map((benefit, i) => (
+                           <div key={i} className="bg-brand-800 p-5 rounded-2xl border border-brand-700 flex items-center gap-4 hover:border-brand-highlight/30 transition-all group">
+                               <div className={`p-3 rounded-xl bg-brand-900 border border-brand-700 ${benefit.color} group-hover:scale-110 transition-transform shadow-lg`}>
+                                   <benefit.icon size={24} />
+                               </div>
+                               <div>
+                                   <h4 className="text-sm font-black text-white uppercase italic">{benefit.title}</h4>
+                                   <p className="text-[10px] text-slate-500 font-bold mt-1 leading-relaxed">{benefit.desc}</p>
+                               </div>
+                           </div>
+                       ))}
+                   </div>
+
+                   <button 
+                        onClick={() => setShowVipDetails(true)}
+                        className="w-full bg-brand-highlight text-brand-900 py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-brand-highlight/20 active:scale-95 transition-all"
+                    >
+                       Consulter mon Statut Détaillé
+                   </button>
+               </div>
+           )}
          </div>
       </div>
 
@@ -595,14 +613,28 @@ const App = () => {
                 <div className="p-4 overflow-y-auto space-y-3">
                    {betSlip.map((item, idx) => (
                       <div key={idx} className="bg-brand-800 p-3 rounded-lg border border-brand-700 flex justify-between items-center relative group">
-                          <div>
-                              <p className="text-xs text-slate-500 font-bold uppercase">{item.matchInfo}</p>
+                          <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                  {item.countryCode && (
+                                      getFlag(item.countryCode).startsWith('http') 
+                                          ? <img src={getFlag(item.countryCode)} className="w-4 h-3 object-cover rounded-sm" alt="flag" referrerPolicy="no-referrer" />
+                                          : <span className="text-xs">{getFlag(item.countryCode)}</span>
+                                  )}
+                                  <span className="text-[10px] text-slate-500 font-bold uppercase">{item.league}</span>
+                              </div>
+                              <p className="text-xs text-white font-bold uppercase">{item.matchInfo}</p>
                               <p className="text-sm font-bold text-white mt-1">
                                   {item.selection === 'home' ? 'Résultat Final (1)' : 
                                    item.selection === 'away' ? 'Résultat Final (2)' : 
                                    item.selection === 'draw' ? 'Résultat Final (X)' : 
                                    item.selection === 'over2.5' ? 'Plus (2.5)' :
                                    item.selection === 'under2.5' ? 'Moins (2.5)' :
+                                   item.selection === 'injuriesOver1.5' ? 'Blessés Plus (1.5)' :
+                                   item.selection === 'injuriesUnder1.5' ? 'Blessés Moins (1.5)' :
+                                   item.selection === 'cardsOver3.5' ? 'Cartons Plus (3.5)' :
+                                   item.selection === 'cardsUnder3.5' ? 'Cartons Moins (3.5)' :
+                                   item.selection === 'yellowCardsOver2.5' ? 'Jaunes Plus (2.5)' :
+                                   item.selection === 'redCardYes' ? 'Carton Rouge' :
                                    item.selection}
                               </p>
                           </div>
@@ -676,6 +708,7 @@ const App = () => {
         onOpenSettings={() => setSettingsOpen(true)}
         onOpenSupport={() => setSupportOpen(true)}
         onOpenMonetization={() => setMonetizationOpen(true)}
+        onOpenChat={() => setChatOpen(true)}
         onLogout={handleLogout}
         balance={balance}
       />
@@ -683,57 +716,65 @@ const App = () => {
       {/* QR CODE MODAL */}
       <AnimatePresence>
         {showQrModal && generatedCode && (
-            <div className="fixed inset-0 z-[250] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl">
                 <motion.div 
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
-                    className="bg-white p-8 rounded-3xl flex flex-col items-center gap-6 max-w-sm w-full relative"
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                    className="bg-white p-8 rounded-[2.5rem] flex flex-col items-center gap-6 max-w-sm w-full relative shadow-[0_0_100px_rgba(0,0,0,0.5)]"
                 >
                     <button 
-                        onClick={() => setShowQrModal(false)}
-                        className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-900"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowQrModal(false);
+                        }}
+                        className="absolute -top-4 -right-4 p-3 bg-brand-900 text-white rounded-full shadow-xl hover:bg-brand-accent hover:text-brand-900 transition-all z-50 border-4 border-white"
                     >
                         <X size={24} />
                     </button>
                     
-                    <h3 className="text-xl font-black text-slate-900 uppercase italic">Coupon QR Code</h3>
-                    
-                    <div className="relative bg-white p-4 rounded-2xl shadow-inner border border-slate-100">
-                        <QRCodeCanvas 
-                            id="coupon-qr-code-canvas"
-                            value={`https://sportbot.app/coupon/${generatedCode}`} 
-                            size={256}
-                            level="H"
-                            includeMargin={true}
-                            imageSettings={{
-                                src: "https://raw.githubusercontent.com/gazawaamos8-blip/Mon-icon-/refs/heads/main/sportbot-icon.png",
-                                x: undefined,
-                                y: undefined,
-                                height: 60,
-                                width: 60,
-                                excavate: true,
-                            }}
-                        />
+                    <div className="text-center">
+                        <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Coupon Gagnant</h3>
+                        <p className="text-brand-accent text-[10px] font-bold uppercase tracking-widest mt-1">Scannez pour valider votre pari</p>
                     </div>
                     
-                    <div className="text-center">
-                        <p className="text-slate-500 text-xs font-bold uppercase mb-1">Code du Coupon</p>
-                        <p className="text-2xl font-black text-brand-900 tracking-widest">{generatedCode}</p>
+                    <div className="relative bg-white p-6 rounded-3xl shadow-[0_0_50px_rgba(255,255,255,0.1)] border-2 border-brand-700 group">
+                        <QRCodeCanvas 
+                            ref={qrRef}
+                            value={`https://sportbot.app/coupon/${generatedCode}`} 
+                            size={240}
+                            level="H"
+                            includeMargin={true}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="w-12 h-12 bg-white rounded-xl shadow-lg border border-slate-100 flex items-center justify-center p-2">
+                                <BrandIcon size={32} />
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="text-center w-full bg-brand-800 py-4 rounded-2xl border border-brand-700">
+                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">ID TRANSACTION</p>
+                        <p className="text-3xl font-black text-brand-accent tracking-[0.2em] italic">{generatedCode}</p>
                     </div>
                     
                     <button 
                         onClick={downloadQrCode}
-                        className="w-full bg-brand-900 text-white py-4 rounded-xl font-black uppercase flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-transform"
+                        className="w-full bg-brand-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl active:scale-95 transition-all hover:bg-brand-800"
                     >
-                        <Download size={20} /> Télécharger le QR
+                        <Download size={22} /> Télécharger l'image
                     </button>
                 </motion.div>
             </div>
         )}
       </AnimatePresence>
 
-      <WalletModal isOpen={walletOpen} onClose={() => setWalletOpen(false)} onTransaction={handleTransaction} />
+      <WalletModal 
+        isOpen={walletOpen} 
+        onClose={() => setWalletOpen(false)} 
+        onTransaction={handleTransaction} 
+        onNavigate={setCurrentSection}
+      />
       <ProfileModal 
          isOpen={profileOpen} 
          onClose={() => setProfileOpen(false)} 
@@ -762,6 +803,17 @@ const App = () => {
 
       {/* App Install Prompt */}
       {user && <AppInstallPrompt />}
+
+      {/* Floating Chat Button */}
+      <button 
+        onClick={() => setChatOpen(true)}
+        className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full bg-brand-accent text-brand-900 shadow-[0_0_20px_rgba(0,208,98,0.5)] flex items-center justify-center hover:scale-110 active:scale-90 transition-all group"
+      >
+        <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-brand-900 flex items-center justify-center text-[10px] font-bold text-white animate-pulse">
+          12
+        </div>
+        <MessageCircle size={28} className="group-hover:rotate-12 transition-transform" />
+      </button>
 
     </div>
     </PaymentVerificationGate>

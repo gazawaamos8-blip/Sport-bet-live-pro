@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, AlertTriangle, Clock, Wallet, Ban, HeartHandshake, Info, CheckCircle2, Timer } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, Clock, Wallet, Ban, HeartHandshake, Info, CheckCircle2, Timer, Award, Target, TrendingUp, ChevronRight, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ResponsibleGamingView: React.FC = () => {
@@ -10,6 +10,7 @@ const ResponsibleGamingView: React.FC = () => {
   });
   const [showLimitModal, setShowLimitModal] = useState<string | null>(null);
   const [tempLimit, setTempLimit] = useState<number>(0);
+  const [showDetailsModal, setShowDetailsModal] = useState<string | null>(null);
   const [realityCheck, setRealityCheck] = useState('1 heure');
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -22,6 +23,31 @@ const ResponsibleGamingView: React.FC = () => {
     }
   };
 
+  const getDetailsContent = (type: string) => {
+    switch(type) {
+      case 'limits':
+        return {
+          title: "Gestion des Limites",
+          icon: <Wallet className="text-brand-accent" size={32} />,
+          text: "Les limites de dépôt vous permettent de contrôler vos dépenses. Une fois une limite atteinte, vous ne pourrez plus déposer d'argent jusqu'à la fin de la période définie. Notez que toute demande d'augmentation de limite prend 24 heures pour être effective, tandis que les diminutions sont immédiates."
+        };
+      case 'exclusion':
+        return {
+          title: "Auto-Exclusion PRO",
+          icon: <Ban className="text-red-500" size={32} />,
+          text: "L'auto-exclusion est l'outil le plus radical pour protéger votre bankroll. Vous pouvez choisir une pause de 24h à 30 jours, ou une exclusion définitive. Pendant cette période, l'accès à votre compte sera totalement bloqué et aucune promotion ne vous sera envoyée."
+        };
+      case 'reality':
+        return {
+          title: "Reality Check",
+          icon: <Timer className="text-blue-400" size={32} />,
+          text: "Le Reality Check est une notification automatique qui s'affiche pendant vos sessions de jeu pour vous rappeler le temps passé et le montant total misé. C'est un excellent moyen de garder les pieds sur terre lors de sessions intenses."
+        };
+      default:
+        return { title: "", icon: null, text: "" };
+    }
+  };
+
   return (
     <div className="p-4 animate-fade-in space-y-6 pb-24">
       <div className="flex items-center gap-3 mb-2">
@@ -29,8 +55,8 @@ const ResponsibleGamingView: React.FC = () => {
           <ShieldCheck className="text-emerald-500" size={24} />
         </div>
         <div>
-          <h2 className="text-xl font-black text-white italic uppercase">Jeu Responsable</h2>
-          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Votre Sécurité Avant Tout</p>
+          <h2 className="text-xl font-black text-white italic uppercase">Jeu Responsable <span className="text-brand-accent">PRO</span></h2>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Protection & Performance</p>
         </div>
       </div>
 
@@ -65,7 +91,12 @@ const ResponsibleGamingView: React.FC = () => {
                 <Wallet size={18} className="text-brand-accent" />
                 <h3 className="text-sm font-black text-white uppercase">Limites de Dépôt</h3>
             </div>
-            <span className="text-[9px] font-black text-slate-500 uppercase">Délai de 24h pour augmenter</span>
+            <button 
+                onClick={() => setShowDetailsModal('limits')}
+                className="text-[8px] font-black text-brand-accent uppercase border border-brand-accent/30 px-2 py-1 rounded hover:bg-brand-accent hover:text-brand-900 transition-all"
+            >
+                Voir Détails
+            </button>
           </div>
           <div className="p-4 space-y-4">
             {[
@@ -91,9 +122,17 @@ const ResponsibleGamingView: React.FC = () => {
 
         {/* Self-Exclusion */}
         <div className="bg-brand-800 rounded-2xl border border-brand-700 overflow-hidden shadow-xl">
-          <div className="p-4 border-b border-brand-700 bg-brand-900/50 flex items-center gap-2">
-            <Ban size={18} className="text-red-500" />
-            <h3 className="text-sm font-black text-white uppercase">Auto-Exclusion</h3>
+          <div className="p-4 border-b border-brand-700 bg-brand-900/50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <Ban size={18} className="text-red-500" />
+                <h3 className="text-sm font-black text-white uppercase">Auto-Exclusion</h3>
+            </div>
+            <button 
+                onClick={() => setShowDetailsModal('exclusion')}
+                className="text-[8px] font-black text-red-500 uppercase border border-red-500/30 px-2 py-1 rounded hover:bg-red-500 hover:text-white transition-all"
+            >
+                Voir Détails
+            </button>
           </div>
           <div className="p-4 space-y-4">
             <p className="text-xs text-slate-400 leading-relaxed">Faites une pause temporaire ou définitive. Une fois activée, cette action est <span className="text-red-500 font-bold">irréversible</span> pendant la période choisie.</p>
@@ -116,9 +155,17 @@ const ResponsibleGamingView: React.FC = () => {
 
         {/* Reality Check */}
         <div className="bg-brand-800 rounded-2xl border border-brand-700 overflow-hidden shadow-xl">
-          <div className="p-4 border-b border-brand-700 bg-brand-900/50 flex items-center gap-2">
-            <Timer size={18} className="text-blue-400" />
-            <h3 className="text-sm font-black text-white uppercase">Rappel de Temps (Reality Check)</h3>
+          <div className="p-4 border-b border-brand-700 bg-brand-900/50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <Timer size={18} className="text-blue-400" />
+                <h3 className="text-sm font-black text-white uppercase">Rappel de Temps</h3>
+            </div>
+            <button 
+                onClick={() => setShowDetailsModal('reality')}
+                className="text-[8px] font-black text-blue-400 uppercase border border-blue-400/30 px-2 py-1 rounded hover:bg-blue-400 hover:text-white transition-all"
+            >
+                Voir Détails
+            </button>
           </div>
           <div className="p-4 flex justify-between items-center">
             <p className="text-xs text-slate-400">Recevoir une notification toutes les :</p>
@@ -136,26 +183,101 @@ const ResponsibleGamingView: React.FC = () => {
         </div>
       </div>
 
-      {/* Support Links */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Aide & Conseils</h3>
-        <div className="space-y-2">
-          <div className="bg-brand-800 p-5 rounded-2xl border border-brand-700 flex items-center gap-4 hover:border-blue-500/30 transition-colors cursor-pointer group">
-            <div className="bg-blue-500/20 p-3 rounded-xl text-blue-400 group-hover:scale-110 transition-transform"><HeartHandshake size={24} /></div>
-            <div>
-              <p className="text-sm font-black text-white uppercase italic">Conseils de Jeu</p>
-              <p className="text-[10px] text-slate-500 font-bold">Apprenez à gérer votre budget de jeu efficacement.</p>
+      {/* Pro Features Section */}
+      <div className="bg-gradient-to-br from-brand-700 to-brand-900 rounded-2xl border border-brand-500/50 overflow-hidden shadow-2xl relative">
+        <div className="absolute top-0 right-0 p-4 opacity-10">
+          <Trophy size={80} className="text-brand-accent" />
+        </div>
+        <div className="p-5 border-b border-brand-600 bg-brand-900/40 flex items-center gap-2">
+          <Award size={20} className="text-brand-accent" />
+          <h3 className="text-sm font-black text-white uppercase italic">Outils de Protection Pro</h3>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="flex items-center gap-4 bg-brand-900/60 p-4 rounded-xl border border-brand-600/50">
+            <div className="bg-brand-accent/20 p-2 rounded-lg text-brand-accent">
+              <TrendingUp size={20} />
             </div>
+            <div className="flex-1">
+              <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Analyse de Comportement IA</p>
+              <p className="text-xs text-white font-bold mt-1">Notre IA surveille vos habitudes pour détecter tout signe de risque en temps réel.</p>
+            </div>
+            <div className="bg-emerald-500/20 text-emerald-500 px-2 py-1 rounded text-[8px] font-black uppercase">Actif</div>
           </div>
-          <div className="bg-brand-800 p-5 rounded-2xl border border-brand-700 flex items-center gap-4 hover:border-purple-500/30 transition-colors cursor-pointer group">
-            <div className="bg-purple-500/20 p-3 rounded-xl text-purple-400 group-hover:scale-110 transition-transform"><Info size={24} /></div>
-            <div>
-              <p className="text-sm font-black text-white uppercase italic">Test d'Auto-Évaluation</p>
-              <p className="text-[10px] text-slate-500 font-bold">Évaluez votre comportement de jeu en 5 minutes.</p>
+
+          <div className="flex items-center gap-4 bg-brand-900/60 p-4 rounded-xl border border-brand-600/50">
+            <div className="bg-blue-500/20 p-2 rounded-lg text-blue-400">
+              <Target size={20} />
             </div>
+            <div className="flex-1">
+              <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Budget de Session Pro</p>
+              <p className="text-xs text-white font-bold mt-1">Définissez un montant maximum par session de jeu. L'app se bloque une fois atteint.</p>
+            </div>
+            <button className="bg-brand-accent text-brand-900 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase shadow-lg">Configurer</button>
           </div>
         </div>
       </div>
+
+      {/* Detailed Tips & Resources */}
+      <div className="space-y-4">
+        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Ressources & Accompagnement Pro</h3>
+        <div className="grid grid-cols-1 gap-3">
+          <div className="bg-brand-800 p-5 rounded-2xl border border-brand-700 flex items-center gap-4 hover:border-brand-accent/30 transition-all cursor-pointer group">
+            <div className="bg-brand-accent/10 p-3 rounded-xl text-brand-accent group-hover:scale-110 transition-transform"><HeartHandshake size={24} /></div>
+            <div className="flex-1">
+              <p className="text-sm font-black text-white uppercase italic">Guide du Parieur Pro</p>
+              <p className="text-[10px] text-slate-500 font-bold">Maîtrisez la gestion de bankroll et évitez le tilt émotionnel.</p>
+            </div>
+            <ChevronRight size={16} className="text-slate-600" />
+          </div>
+
+          <div className="bg-brand-800 p-5 rounded-2xl border border-brand-700 flex items-center gap-4 hover:border-blue-500/30 transition-all cursor-pointer group">
+            <div className="bg-blue-500/10 p-3 rounded-xl text-blue-400 group-hover:scale-110 transition-transform"><Info size={24} /></div>
+            <div className="flex-1">
+              <p className="text-sm font-black text-white uppercase italic">Auto-Évaluation Avancée</p>
+              <p className="text-[10px] text-slate-500 font-bold">Un test complet validé par des experts en psychologie du jeu.</p>
+            </div>
+            <ChevronRight size={16} className="text-slate-600" />
+          </div>
+
+          <div className="bg-brand-800 p-5 rounded-2xl border border-brand-700 flex items-center gap-4 hover:border-red-500/30 transition-all cursor-pointer group">
+            <div className="bg-red-500/10 p-3 rounded-xl text-red-400 group-hover:scale-110 transition-transform"><AlertTriangle size={24} /></div>
+            <div className="flex-1">
+              <p className="text-sm font-black text-white uppercase italic">Aide Immédiate</p>
+              <p className="text-[10px] text-slate-500 font-bold">Besoin de parler ? Nos conseillers sont là pour vous aider 24/7.</p>
+            </div>
+            <button className="bg-red-500 text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase">Appeler</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Details Modal */}
+      <AnimatePresence>
+        {showDetailsModal && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                <motion.div 
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                    className="bg-brand-800 w-full max-w-sm rounded-3xl border border-brand-600 p-8 space-y-6 shadow-2xl"
+                >
+                    <div className="flex flex-col items-center text-center space-y-4">
+                        <div className="p-4 bg-brand-900 rounded-2xl border border-brand-700">
+                            {getDetailsContent(showDetailsModal).icon}
+                        </div>
+                        <h3 className="text-xl font-black text-white uppercase italic">{getDetailsContent(showDetailsModal).title}</h3>
+                        <p className="text-xs text-slate-400 leading-relaxed font-medium">{getDetailsContent(showDetailsModal).text}</p>
+                    </div>
+                    
+                    <button 
+                        onClick={() => setShowDetailsModal(null)} 
+                        className="w-full bg-brand-accent text-brand-900 font-black py-4 rounded-2xl uppercase text-xs shadow-lg shadow-brand-accent/20 active:scale-95 transition-all"
+                    >
+                        Compris
+                    </button>
+                </motion.div>
+            </div>
+        )}
+      </AnimatePresence>
 
       {/* Limit Modal */}
       <AnimatePresence>

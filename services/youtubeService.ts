@@ -62,10 +62,11 @@ export const MOCK_VIDEOS: YouTubeVideo[] = [
     }
 ];
 
-export const searchLiveSports = async (query: string = 'football live match', maxResults: number = 12, pageToken?: string): Promise<{items: YouTubeVideo[], nextPageToken?: string}> => {
+export const searchLiveSports = async (query: string = 'football live match direct', maxResults: number = 12, pageToken?: string): Promise<{items: YouTubeVideo[], nextPageToken?: string}> => {
   for (const key of API_KEYS) {
     try {
-      let url = `${BASE_API_URL}/search?part=snippet&eventType=live&type=video&videoEmbeddable=true&q=${encodeURIComponent(query)}&key=${key}&maxResults=${maxResults}`;
+      // Added more specific parameters for live content
+      let url = `${BASE_API_URL}/search?part=snippet&eventType=live&type=video&videoEmbeddable=true&q=${encodeURIComponent(query + ' live stream direct')}&key=${key}&maxResults=${maxResults}`;
       if (pageToken) url += `&pageToken=${pageToken}`;
       
       const response = await fetch(url);

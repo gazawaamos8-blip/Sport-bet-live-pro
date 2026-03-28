@@ -1357,6 +1357,10 @@ const initializeMatches = (): Match[] => {
                     homeAway: parseFloat((Math.random() * 0.5 + 1.2).toFixed(2)),
                     drawAway: parseFloat((Math.random() * 0.5 + 1.3).toFixed(2))
                 },
+                overUnder25: leagueData.sport === 'tennis' ? undefined : {
+                    over: parseFloat((Math.random() * 1.5 + 1.5).toFixed(2)),
+                    under: parseFloat((Math.random() * 1.5 + 1.5).toFixed(2))
+                },
                 aiProbabilities: {
                     home: aiHome,
                     draw: leagueData.sport === 'tennis' ? 0 : aiDraw,
@@ -1414,6 +1418,10 @@ export const fetchMatchesFromApi = async (): Promise<Match[]> => {
                     draw: 2.5 + Math.random(),
                     away: 2.0 + Math.random()
                 },
+                overUnder25: {
+                    over: 1.7 + Math.random(),
+                    under: 1.8 + Math.random()
+                },
                 homeLogo: item.teams.home.logo,
                 awayLogo: item.teams.away.logo
             }));
@@ -1466,7 +1474,24 @@ export const checkBetResults = async () => {
             }
             
             const result = match.homeScore > match.awayScore ? 'home' : (match.homeScore < match.awayScore ? 'away' : 'draw');
-            if (result !== item.selection) {
+            const totalGoals = match.homeScore + match.awayScore;
+            
+            let isWin = false;
+            if (item.selection === 'home' || item.selection === 'draw' || item.selection === 'away') {
+                isWin = result === item.selection;
+            } else if (item.selection === 'homeDraw') {
+                isWin = result === 'home' || result === 'draw';
+            } else if (item.selection === 'homeAway') {
+                isWin = result === 'home' || result === 'away';
+            } else if (item.selection === 'drawAway') {
+                isWin = result === 'draw' || result === 'away';
+            } else if (item.selection === 'over2.5') {
+                isWin = totalGoals > 2.5;
+            } else if (item.selection === 'under2.5') {
+                isWin = totalGoals < 2.5;
+            }
+
+            if (!isWin) {
                 won = false;
             }
         });

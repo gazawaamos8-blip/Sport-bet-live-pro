@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AppSection, User } from '../types';
 import { db } from '../services/database';
-import { X, Home, Activity, Calendar, Tv, Gamepad2, Users, Settings, HelpCircle, LogOut, ChevronRight, Wallet, Trophy, Clock, Bookmark, FileText, Gift, BarChart2, ShieldCheck, Star, Zap, Newspaper, Medal, Download, DollarSign } from 'lucide-react';
+import { X, Home, Activity, Calendar, Tv, Gamepad2, Users, Settings, HelpCircle, LogOut, ChevronRight, Wallet, Trophy, Clock, Bookmark, FileText, Gift, BarChart2, ShieldCheck, Star, Zap, Newspaper, Medal, Download, DollarSign, MessageCircle } from 'lucide-react';
+import BrandIcon from './BrandIcon';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -13,11 +14,12 @@ interface SidebarProps {
   onOpenSettings: () => void;
   onOpenSupport: () => void;
   onOpenMonetization: () => void;
+  onOpenChat: () => void;
   onLogout: () => void;
   balance: number;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentSection, onNavigate, onOpenWallet, onOpenProfile, onOpenSettings, onOpenSupport, onOpenMonetization, onLogout, balance }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentSection, onNavigate, onOpenWallet, onOpenProfile, onOpenSettings, onOpenSupport, onOpenMonetization, onOpenChat, onLogout, balance }) => {
   const [canClaimBonus, setCanClaimBonus] = useState(false);
 
   useEffect(() => {
@@ -61,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentSection, onNa
           alert(`Félicitations ! Vous avez reçu ${bonusAmount} CFA pour le téléchargement de l'application SportBot !`);
       }
       // In a real app, this would trigger the actual APK download
-      window.open('https://ais-dev-fuuqsfldi6ecrfv657ceum-48676101579.europe-west2.run.app/sportbet.apk', '_blank');
+      window.open('https://ais-dev-fuuqsfldi6ecrfv657ceum-48676101579.europe-west2.run.app/sportbot.apk', '_blank');
   };
 
   const menuItems = [
@@ -78,6 +80,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentSection, onNa
     { id: AppSection.CASINO, label: 'Casino & Jeux', icon: Gamepad2, color: 'text-purple-500' },
     { id: AppSection.RESULTS, label: 'Résultats', icon: Trophy, color: 'text-orange-500' },
     { id: AppSection.NEWS, label: 'Actualités', icon: Newspaper, color: 'text-brand-accent' },
+    { id: 'chat', label: 'Chat Live', icon: MessageCircle, color: 'text-emerald-400' },
     { id: AppSection.LEADERBOARD, label: 'Classement Pro', icon: Medal, color: 'text-yellow-500' },
     { id: AppSection.REFERRAL, label: 'Parrainage', icon: Users, color: 'text-green-400' },
     { id: AppSection.RESPONSIBLE_GAMING, label: 'Jeu Responsable', icon: ShieldCheck, color: 'text-emerald-500' },
@@ -97,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentSection, onNa
         {/* Header */}
         <div className="p-5 bg-brand-800 border-b border-brand-700 flex justify-between items-center">
              <div className="flex items-center gap-3">
-                 <img src="https://raw.githubusercontent.com/gazawaamos8-blip/Icon-sport-bet-pro/refs/heads/main/sportbet-icon%20(1).png" alt="Sport Bet" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
+                 <BrandIcon size={40} />
                  <div className="flex flex-col">
                      <h2 className="text-xl font-black italic text-white tracking-tighter uppercase">
                         sportbot
@@ -133,7 +136,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, currentSection, onNa
             {menuItems.map((item) => (
                 <button
                     key={item.id}
-                    onClick={() => { onNavigate(item.id); onClose(); }}
+                    onClick={() => { 
+                        if (item.id === 'chat') {
+                            onOpenChat();
+                        } else {
+                            onNavigate(item.id as AppSection); 
+                        }
+                        onClose(); 
+                    }}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${currentSection === item.id ? 'bg-brand-800 text-white shadow-lg border border-brand-700' : 'text-slate-400 hover:bg-brand-800/50 hover:text-white'}`}
                 >
                     <item.icon size={20} className={currentSection === item.id ? item.color : 'text-slate-500'} />

@@ -18,7 +18,7 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
         <div className="sticky top-0 z-50 bg-brand-900/90 border-b border-brand-700 backdrop-blur-md px-6 py-4 flex justify-between items-center">
             <div className="flex items-center gap-2">
                 <Globe className="text-brand-accent" size={24} />
-                <h2 className="text-xl font-black text-white italic tracking-tighter">SPORTBET<span className="text-brand-accent">CORP</span></h2>
+                <h2 className="text-xl font-black text-white italic tracking-tighter">sportbot<span className="text-brand-accent">CORP</span></h2>
             </div>
             <button onClick={onClose} className="p-2 bg-brand-800 rounded-full hover:bg-brand-700 text-white transition-colors">
                 <X size={24} />

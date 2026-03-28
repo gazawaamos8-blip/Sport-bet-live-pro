@@ -15,7 +15,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpdate
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [vpnEnabled, setVpnEnabled] = useState(false);
   const [mtnSimEnabled, setMtnSimEnabled] = useState(false);
-  const [vpnApiKey, setVpnApiKey] = useState('VPN-SPORTBET-2026-DEFAULT');
+  const [vpnApiKey, setVpnApiKey] = useState('VPN-sportbot-2026-DEFAULT');
   const [notifs, setNotifs] = useState({
     push: true,
     sms: false,
@@ -129,20 +129,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onUpdate
             {/* Theme */}
             <div>
                  <h4 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
-                    {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />} {t('theme')}
+                    <Moon size={16} /> {t('theme')}
                 </h4>
                 <div className="flex bg-brand-800 p-1 rounded-xl border border-brand-700">
                     <button 
-                        onClick={() => handleThemeChange('dark')}
-                        className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${theme === 'dark' ? 'bg-brand-900 text-brand-accent shadow' : 'text-slate-400'}`}
+                        className="flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 bg-brand-900 text-brand-accent shadow"
                     >
                         <Moon size={14} /> {t('darkMode')}
-                    </button>
-                    <button 
-                        onClick={() => handleThemeChange('light')}
-                        className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${theme === 'light' ? 'bg-white text-brand-900 shadow' : 'text-slate-400'}`}
-                    >
-                        <Sun size={14} /> {t('lightMode')}
                     </button>
                 </div>
             </div>

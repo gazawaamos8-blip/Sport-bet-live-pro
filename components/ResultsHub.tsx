@@ -187,7 +187,7 @@ const ResultsHub: React.FC<ResultsHubProps> = ({ onOpenDetails }) => {
                                 <div className="p-4 flex items-center justify-between">
                                     <div className="flex flex-col items-center gap-1 flex-1">
                                         <div className="relative">
-                                            <img src={match.homeLogo} className="w-8 h-8 rounded-full bg-brand-700 p-0.5" referrerPolicy="no-referrer" />
+                                            <img src={match.homeLogo} className="w-12 h-12 rounded-full bg-brand-700 p-1 border border-brand-600 shadow-lg object-cover" referrerPolicy="no-referrer" />
                                             {match.homeCountryCode && !match.homeLogo?.includes('flagcdn.com') && (
                                                 <div className="absolute -bottom-1 -right-1 shadow-md">
                                                     {getFlag(match.homeCountryCode).startsWith('http') 
@@ -208,7 +208,7 @@ const ResultsHub: React.FC<ResultsHubProps> = ({ onOpenDetails }) => {
 
                                     <div className="flex flex-col items-center gap-1 flex-1">
                                         <div className="relative">
-                                            <img src={match.awayLogo} className="w-8 h-8 rounded-full bg-brand-700 p-0.5" referrerPolicy="no-referrer" />
+                                            <img src={match.awayLogo} className="w-12 h-12 rounded-full bg-brand-700 p-1 border border-brand-600 shadow-lg object-cover" referrerPolicy="no-referrer" />
                                             {match.awayCountryCode && !match.awayLogo?.includes('flagcdn.com') && (
                                                 <div className="absolute -bottom-1 -right-1 shadow-md">
                                                     {getFlag(match.awayCountryCode).startsWith('http') 

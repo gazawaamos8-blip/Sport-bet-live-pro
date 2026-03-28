@@ -2,9 +2,9 @@ import { User, PlacedBet } from '../types';
 import { MOCK_HISTORY } from '../constants';
 
 const KEYS = {
-  USER: 'sportbet_user',
-  HISTORY: 'sportbet_history',
-  BALANCE: 'sportbet_balance'
+  USER: 'sportbot_user',
+  HISTORY: 'sportbot_history',
+  BALANCE: 'sportbot_balance'
 };
 
 export const storageService = {

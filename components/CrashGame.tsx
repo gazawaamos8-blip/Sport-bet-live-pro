@@ -35,9 +35,24 @@ const CrashGame: React.FC<CrashGameProps> = ({ onClose }) => {
   const [autoCashoutEnabled2, setAutoCashoutEnabled2] = useState(false);
   const [autoCashoutValue2, setAutoCashoutValue2] = useState<string>("2.00");
 
+  const [activeTab, setActiveTab] = useState<'bets' | 'stats'>('bets');
+  const [stats, setStats] = useState({ totalBets: 0, totalWins: 0, highestMult: 0 });
+
   const requestRef = useRef<number>();
   const startTimeRef = useRef<number>(0);
   const crashPointRef = useRef<number>(0);
+
+  // Stats update
+  useEffect(() => {
+    if (gameState === 'CRASHED') {
+        setStats(prev => ({
+            ...prev,
+            totalBets: prev.totalBets + (hasBet ? 1 : 0) + (hasBet2 ? 1 : 0),
+            totalWins: prev.totalWins + (cashedOutAt ? 1 : 0) + (cashedOutAt2 ? 1 : 0),
+            highestMult: Math.max(prev.highestMult, multiplier)
+        }));
+    }
+  }, [gameState]);
 
   // CHANGED: Subscribe to balance via DB
   useEffect(() => {
@@ -219,7 +234,7 @@ const CrashGame: React.FC<CrashGameProps> = ({ onClose }) => {
   // Tools
   const handlePrint = () => window.print();
   const handleShare = () => {
-      if (navigator.share) navigator.share({ title: 'Sport Bet', text: `J'ai gagné sur Aviator ! Multiplicateur: ${multiplier}x Code Promo: EUROVIC https://ais-dev-fuuqsfldi6ecrfv657ceum-48676101579.europe-west2.run.app/`, url: 'https://sportbet.app/' });
+      if (navigator.share) navigator.share({ title: 'sportbot', text: `J'ai gagné sur Aviator ! Multiplicateur: ${multiplier}x Code Promo: EUROVIC https://ais-dev-fuuqsfldi6ecrfv657ceum-48676101579.europe-west2.run.app/`, url: 'https://sportbot.app/' });
       else alert("Share not supported on this device");
   };
   const handleDownload = () => alert("Downloading round receipt...");
@@ -553,55 +568,107 @@ const CrashGame: React.FC<CrashGameProps> = ({ onClose }) => {
             </div>
          </div>
 
-         {/* RIGHT: Live Bets & Chat Sidebar (Hidden on mobile) */}
-         <div className="w-80 bg-[#1a242d] border-l border-white/5 flex flex-col hidden lg:flex">
-             <div className="flex-1 flex flex-col min-h-0">
-                 <div className="p-3 bg-[#242f38] font-bold text-xs text-slate-400 uppercase flex justify-between items-center">
-                     <span>Paris du tour</span>
-                     <div className="flex items-center gap-1 text-green-500"><Users size={12} /> {fakePlayers.length + (hasBet ? 1 : 0) + (hasBet2 ? 1 : 0)}</div>
-                 </div>
-                 <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-                     {hasBet && (
-                         <div className={`flex justify-between items-center p-2 rounded border ${cashedOutAt ? 'bg-green-500/10 border-green-500/50' : 'bg-[#2c3842] border-transparent'}`}>
-                             <div className="flex items-center gap-2">
-                                 <div className="w-6 h-6 rounded bg-orange-500 text-white flex items-center justify-center font-bold text-xs">1</div>
-                                 <span className="text-sm font-bold text-white">Moi (Bet 1)</span>
-                             </div>
-                             <div className="text-right">
-                                 <div className="text-sm text-slate-300">{betAmount}</div>
-                                 {cashedOutAt && <div className="text-xs font-black text-green-500">x{cashedOutAt.toFixed(2)}</div>}
-                             </div>
-                         </div>
-                     )}
-                     {hasBet2 && (
-                         <div className={`flex justify-between items-center p-2 rounded border ${cashedOutAt2 ? 'bg-green-500/10 border-green-500/50' : 'bg-[#2c3842] border-transparent'}`}>
-                             <div className="flex items-center gap-2">
-                                 <div className="w-6 h-6 rounded bg-orange-500 text-white flex items-center justify-center font-bold text-xs">2</div>
-                                 <span className="text-sm font-bold text-white">Moi (Bet 2)</span>
-                             </div>
-                             <div className="text-right">
-                                 <div className="text-sm text-slate-300">{betAmount2}</div>
-                                 {cashedOutAt2 && <div className="text-xs font-black text-green-500">x{cashedOutAt2.toFixed(2)}</div>}
-                             </div>
-                         </div>
-                     )}
-                     {fakePlayers.map((player, i) => (
-                         <div key={i} className={`flex justify-between items-center p-1.5 rounded transition-colors ${player.cashout ? 'bg-green-500/5' : ''}`}>
-                             <div className="text-xs text-slate-500">{player.name}</div>
-                             <div className="flex items-center gap-4">
-                                <div className="text-xs text-slate-300">{player.bet}</div>
-                                {player.cashout ? (
-                                    <div className="bg-green-500/20 text-green-400 px-1.5 rounded text-[10px] font-bold min-w-[40px] text-right">
-                                        {player.cashout.toFixed(2)}x
+          {/* RIGHT: Live Bets & Chat Sidebar (Hidden on mobile) */}
+          <div className="w-80 bg-[#1a242d] border-l border-white/5 flex flex-col hidden lg:flex">
+              <div className="flex-1 flex flex-col min-h-0">
+                  <div className="flex bg-[#242f38] border-b border-white/5">
+                      <button 
+                        onClick={() => setActiveTab('bets')}
+                        className={`flex-1 p-3 font-bold text-[10px] uppercase tracking-widest transition-all ${activeTab === 'bets' ? 'text-brand-highlight border-b-2 border-brand-highlight bg-brand-highlight/5' : 'text-slate-500 hover:text-slate-300'}`}
+                      >
+                        Paris du tour
+                      </button>
+                      <button 
+                        onClick={() => setActiveTab('stats')}
+                        className={`flex-1 p-3 font-bold text-[10px] uppercase tracking-widest transition-all ${activeTab === 'stats' ? 'text-brand-highlight border-b-2 border-brand-highlight bg-brand-highlight/5' : 'text-slate-500 hover:text-slate-300'}`}
+                      >
+                        Mes Stats
+                      </button>
+                  </div>
+
+                  {activeTab === 'bets' ? (
+                      <>
+                        <div className="p-3 bg-[#242f38]/50 font-bold text-[10px] text-slate-500 uppercase flex justify-between items-center">
+                            <span>Liste des joueurs</span>
+                            <div className="flex items-center gap-1 text-green-500"><Users size={12} /> {fakePlayers.length + (hasBet ? 1 : 0) + (hasBet2 ? 1 : 0)}</div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+                            {hasBet && (
+                                <div className={`flex justify-between items-center p-2 rounded border ${cashedOutAt ? 'bg-green-500/10 border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.1)]' : 'bg-[#2c3842] border-transparent'}`}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 rounded bg-orange-500 text-white flex items-center justify-center font-black text-[10px]">1</div>
+                                        <span className="text-xs font-black text-white uppercase italic">Moi (Bet 1)</span>
                                     </div>
-                                ) : (
-                                    <div className="text-xs text-slate-600 italic">...</div>
-                                )}
-                             </div>
-                         </div>
-                     ))}
-                 </div>
-             </div>
+                                    <div className="text-right">
+                                        <div className="text-xs font-bold text-slate-300">{betAmount} F</div>
+                                        {cashedOutAt && <div className="text-[10px] font-black text-green-500">x{cashedOutAt.toFixed(2)}</div>}
+                                    </div>
+                                </div>
+                            )}
+                            {hasBet2 && (
+                                <div className={`flex justify-between items-center p-2 rounded border ${cashedOutAt2 ? 'bg-green-500/10 border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.1)]' : 'bg-[#2c3842] border-transparent'}`}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 rounded bg-orange-500 text-white flex items-center justify-center font-black text-[10px]">2</div>
+                                        <span className="text-xs font-black text-white uppercase italic">Moi (Bet 2)</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-xs font-bold text-slate-300">{betAmount2} F</div>
+                                        {cashedOutAt2 && <div className="text-[10px] font-black text-green-500">x{cashedOutAt2.toFixed(2)}</div>}
+                                    </div>
+                                </div>
+                            )}
+                            {fakePlayers.map((player, i) => (
+                                <div key={i} className={`flex justify-between items-center p-2 rounded transition-colors ${player.cashout ? 'bg-green-500/5 border border-green-500/10' : 'hover:bg-white/5'}`}>
+                                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">{player.name}</div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-[10px] font-bold text-slate-400">{player.bet}</div>
+                                        {player.cashout ? (
+                                            <div className="bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded text-[10px] font-black min-w-[45px] text-right">
+                                                {player.cashout.toFixed(2)}x
+                                            </div>
+                                        ) : (
+                                            <div className="text-[10px] text-slate-700 italic font-black">...</div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                      </>
+                  ) : (
+                      <div className="flex-1 p-4 space-y-4">
+                          <div className="bg-[#0f1923] p-4 rounded-2xl border border-white/5">
+                              <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Total Paris</p>
+                              <p className="text-2xl font-black text-white italic">{stats.totalBets}</p>
+                          </div>
+                          <div className="bg-[#0f1923] p-4 rounded-2xl border border-white/5">
+                              <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Victoires</p>
+                              <p className="text-2xl font-black text-green-500 italic">{stats.totalWins}</p>
+                          </div>
+                          <div className="bg-[#0f1923] p-4 rounded-2xl border border-white/5">
+                              <p className="text-[10px] text-slate-500 font-black uppercase mb-1">Meilleur Multiplicateur</p>
+                              <p className="text-2xl font-black text-brand-highlight italic">{stats.highestMult.toFixed(2)}x</p>
+                          </div>
+                          <div className="bg-brand-highlight/10 p-4 rounded-2xl border border-brand-highlight/20">
+                              <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                      <Trophy size={16} className="text-brand-highlight" />
+                                      <span className="text-[10px] font-black text-brand-highlight uppercase">Niveau Aviator Pro</span>
+                                  </div>
+                                  <button 
+                                    onClick={() => alert("Détails du niveau: Vous êtes à 45% du niveau 'Pilote d'Élite'. Continuez à parier pour débloquer des bonus exclusifs !")}
+                                    className="text-[8px] font-black text-brand-highlight uppercase border border-brand-highlight/30 px-2 py-1 rounded hover:bg-brand-highlight hover:text-brand-900 transition-all"
+                                  >
+                                    Voir Détails
+                                  </button>
+                              </div>
+                              <div className="w-full h-2 bg-brand-900 rounded-full overflow-hidden">
+                                  <div className="h-full bg-brand-highlight" style={{ width: '45%' }}></div>
+                              </div>
+                              <p className="text-[9px] text-slate-500 mt-2 font-bold">Gagnez encore 1500 F pour passer au niveau suivant.</p>
+                          </div>
+                      </div>
+                  )}
+              </div>
 
              <div className="h-64 border-t border-white/5 flex flex-col min-h-0">
                  <div className="p-3 bg-[#242f38] font-bold text-xs text-slate-400 uppercase">Chat en direct</div>

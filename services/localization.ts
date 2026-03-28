@@ -369,11 +369,11 @@ let currentLang: Language = 'fr';
 
 export const setAppLanguage = (lang: Language) => {
   currentLang = lang;
-  localStorage.setItem('sportbet_lang', lang);
+  localStorage.setItem('sportbot_lang', lang);
 };
 
 export const getAppLanguage = (): Language => {
-  return (localStorage.getItem('sportbet_lang') as Language) || 'fr';
+  return (localStorage.getItem('sportbot_lang') as Language) || 'fr';
 };
 
 export const t = (key: keyof typeof translations['fr']): string => {

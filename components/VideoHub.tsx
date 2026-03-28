@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Maximize, Signal, Loader, Server, Search, Video, Share2, ChevronDown, History, Film, Globe, ExternalLink, BellRing, Check, ShieldCheck, RotateCw } from 'lucide-react';
+import { Play, Maximize, Signal, Loader, Server, Search, Video, Share2, ChevronDown, History, Film, Globe, ExternalLink, BellRing, Check, ShieldCheck, RotateCw, X, Ban, Sparkles, RefreshCw, Link2, Settings2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Match } from '../types';
 import { searchLiveSports, YouTubeVideo } from '../services/youtubeService';
 import { searchSerpVideos, SerpVideo } from '../services/serpApiService';
@@ -9,16 +10,20 @@ import { db } from '../services/database';
 interface VideoHubProps {
   matches: Match[];
   searchQuery?: string;
+  initialVideoId?: string | null;
 }
 
-const VideoHub: React.FC<VideoHubProps> = ({ matches, searchQuery: externalSearchQuery = '' }) => {
-  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
+const VideoHub: React.FC<VideoHubProps> = ({ matches, searchQuery: externalSearchQuery = '', initialVideoId }) => {
+  const [activeVideoId, setActiveVideoId] = useState<string | null>(initialVideoId || null);
   const [youtubeVideos, setYoutubeVideos] = useState<YouTubeVideo[]>([]);
   const [nextPageToken, setNextPageToken] = useState<string | undefined>(undefined);
   const [serpVideos, setSerpVideos] = useState<SerpVideo[]>([]);
+  const [serpStart, setSerpStart] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [currentSource, setCurrentSource] = useState<'server1' | 'server2' | 'server3' | 'server4' | 'proxy' | 'serp' | 'films'>('server1');
+  const [currentSource, setCurrentSource] = useState<'server1' | 'server2' | 'server3' | 'server4' | 'server5' | 'server6' | 'server7' | 'server8' | 'server9' | 'server10' | 'server11' | 'server12' | 'server13' | 'proxy' | 'serp' | 'films' | 'direct'>('server1');
   const [searchQuery, setSearchQuery] = useState('');
+  const [directUrl, setDirectUrl] = useState('');
+  const [showDirectInput, setShowDirectInput] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [visibleCount, setVisibleCount] = useState(6);
   const [isRotated, setIsRotated] = useState(false);
@@ -43,7 +48,7 @@ const VideoHub: React.FC<VideoHubProps> = ({ matches, searchQuery: externalSearc
   useEffect(() => {
     const fetchVideos = async () => {
       setLoading(true);
-      const query = externalSearchQuery || 'football match direct live 2026';
+      const query = externalSearchQuery || 'football match direct live stream 2026';
       const result = await searchLiveSports(query, 50);
       setYoutubeVideos(result.items);
       setNextPageToken(result.nextPageToken);
@@ -57,6 +62,14 @@ const VideoHub: React.FC<VideoHubProps> = ({ matches, searchQuery: externalSearc
     fetchVideos();
   }, [externalSearchQuery]);
 
+  // Handle initialVideoId changes
+  useEffect(() => {
+    if (initialVideoId) {
+      setActiveVideoId(initialVideoId);
+      setCurrentSource('server4'); // Use anti-restriction server by default for carousel videos
+    }
+  }, [initialVideoId]);
+
   const handleSearch = async (e?: React.FormEvent, overrideQuery?: string) => {
     if (e) e.preventDefault();
     const queryToSearch = overrideQuery || searchQuery;
@@ -66,8 +79,9 @@ const VideoHub: React.FC<VideoHubProps> = ({ matches, searchQuery: externalSearc
     saveToHistory(queryToSearch);
     
     if (currentSource === 'films' || currentSource === 'serp') {
-        const results = await searchSerpVideos(queryToSearch, currentSource === 'films');
+        const results = await searchSerpVideos(queryToSearch, currentSource === 'films', 0);
         setSerpVideos(results);
+        setSerpStart(results.length);
     } else {
         const result = await searchLiveSports(queryToSearch, 50);
         setYoutubeVideos(result.items);
@@ -122,24 +136,45 @@ const VideoHub: React.FC<VideoHubProps> = ({ matches, searchQuery: externalSearc
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const switchSource = async (source: 'server1' | 'server2' | 'server3' | 'server4' | 'proxy' | 'serp') => {
+  const [showTroubleshooting, setShowTroubleshooting] = useState(false);
+
+  const switchSource = async (source: 'server1' | 'server2' | 'server3' | 'server4' | 'server5' | 'server6' | 'server7' | 'server8' | 'server9' | 'server10' | 'server11' | 'server12' | 'server13' | 'proxy' | 'serp' | 'films' | 'direct') => {
       setCurrentSource(source);
+      setLoading(true);
       
-      if (source === 'server1' || source === 'proxy' || source === 'server2' || source === 'server3' || source === 'server4') {
-          setLoading(true);
+      // Small delay to ensure iframe reloads
+      setTimeout(async () => {
           let query = searchQuery || externalSearchQuery || 'football match direct live 2026';
           if (source === 'server2') query += ' stream';
           if (source === 'server3') query += ' highlights';
-          if (source === 'server4') query += ' live football';
+          if (source === 'server4') query += ' live football direct';
+          if (source === 'server5') query += ' tv live stream';
+          if (source === 'server6') query += ' global stream direct';
+          if (source === 'server7') query += ' invidious stream';
+          if (source === 'server8') query += ' yewtu stream';
+          if (source === 'server9') query += ' invidious live';
+          if (source === 'server10') query += ' invidious direct';
+          if (source === 'server11') query += ' live match direct';
+          if (source === 'server12') query += ' football live direct';
+          if (source === 'server13') query += ' live stream 2026';
           
-          const result = await searchLiveSports(query, 50);
-          setYoutubeVideos(result.items);
-          setNextPageToken(result.nextPageToken);
-          if (result.items.length > 0) {
-              setActiveVideoId(result.items[0].id.videoId);
+          if (source !== 'direct' && source !== 'films' && source !== 'serp') {
+            const result = await searchLiveSports(query, 50);
+            setYoutubeVideos(result.items);
+            setNextPageToken(result.nextPageToken);
+            if (result.items.length > 0) {
+                setActiveVideoId(result.items[0].id.videoId);
+            }
           }
           setLoading(false);
-      }
+      }, 500);
+  };
+
+  const tryNextServer = () => {
+      const sources: ('server1' | 'server2' | 'server3' | 'server4' | 'server5' | 'server6' | 'server7' | 'server8' | 'proxy')[] = ['server1', 'server2', 'server3', 'server4', 'server5', 'server6', 'server7', 'server8', 'proxy'];
+      const currentIndex = sources.indexOf(currentSource as any);
+      const nextIndex = (currentIndex + 1) % sources.length;
+      switchSource(sources[nextIndex]);
   };
 
   const handleShare = async (video: YouTubeVideo | SerpVideo) => {
@@ -163,16 +198,24 @@ const VideoHub: React.FC<VideoHubProps> = ({ matches, searchQuery: externalSearc
   };
 
   const handleViewMore = async () => {
-      if (currentSource !== 'serp' && currentSource !== 'films' && nextPageToken) {
-          setIsSearching(true);
-          const query = searchQuery || externalSearchQuery || 'football match direct live 2026';
-          const result = await searchLiveSports(query, 50, nextPageToken);
-          setYoutubeVideos(prev => [...prev, ...result.items]);
-          setNextPageToken(result.nextPageToken);
-          setIsSearching(false);
+      setIsSearching(true);
+      const query = searchQuery || externalSearchQuery || 'football match direct live 2026';
+      
+      if (currentSource !== 'serp' && currentSource !== 'films') {
+          if (nextPageToken) {
+              const result = await searchLiveSports(query, 50, nextPageToken);
+              setYoutubeVideos(prev => [...prev, ...result.items]);
+              setNextPageToken(result.nextPageToken);
+          } else {
+              setVisibleCount(prev => prev + 50);
+          }
       } else {
+          const results = await searchSerpVideos(query, currentSource === 'films', serpStart);
+          setSerpVideos(prev => [...prev, ...results]);
+          setSerpStart(prev => prev + results.length);
           setVisibleCount(prev => prev + 50);
       }
+      setIsSearching(false);
   };
 
   const toggleSubscription = (query: string) => {
@@ -216,11 +259,32 @@ const VideoHub: React.FC<VideoHubProps> = ({ matches, searchQuery: externalSearc
                   src={currentSource === 'proxy' 
                       ? `https://piped.video/embed/${activeVideoId}` 
                       : currentSource === 'server4'
-                      ? `https://www.youtube-nocookie.com/embed/${activeVideoId}?autoplay=1&modestbranding=1&rel=0&controls=1`
-                      : `https://www.youtube.com/embed/${activeVideoId}?autoplay=1&modestbranding=0&rel=0&controls=1&showinfo=1&fs=1&iv_load_policy=1&enablejsapi=1`}
+                      ? `https://www.youtube-nocookie.com/embed/${activeVideoId}?autoplay=1&modestbranding=1&rel=0&controls=1&origin=${window.location.origin}`
+                      : currentSource === 'server5'
+                      ? `https://vidsrc.to/embed/movie/${activeVideoId}`
+                      : currentSource === 'server6'
+                      ? `https://embed.su/embed/movie/${activeVideoId}`
+                      : currentSource === 'server7'
+                      ? `https://invidious.snopyta.org/embed/${activeVideoId}`
+                      : currentSource === 'server8'
+                      ? `https://yewtu.be/embed/${activeVideoId}`
+                      : currentSource === 'server9'
+                      ? `https://invidious.projectsegfau.lt/embed/${activeVideoId}`
+                      : currentSource === 'server10'
+                      ? `https://invidious.io.lol/embed/${activeVideoId}`
+                      : currentSource === 'server11'
+                      ? `https://inv.tux.rs/embed/${activeVideoId}`
+                      : currentSource === 'server12'
+                      ? `https://invidious.namazso.eu/embed/${activeVideoId}`
+                      : currentSource === 'server13'
+                      ? `https://vid.puffyan.us/embed/${activeVideoId}`
+                      : currentSource === 'direct'
+                      ? directUrl
+                      : `https://www.youtube.com/embed/${activeVideoId}?autoplay=1&modestbranding=0&rel=0&controls=1&showinfo=1&fs=1&iv_load_policy=1&enablejsapi=1&origin=${window.location.origin}`}
                   title="Live Match"
                   frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                  sandbox="allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts allow-top-navigation allow-top-navigation-by-user-activation"
                   allowFullScreen
                   className="w-full h-full"
               ></iframe>
@@ -255,13 +319,205 @@ const VideoHub: React.FC<VideoHubProps> = ({ matches, searchQuery: externalSearc
             <Signal size={40} className="mb-2 opacity-50" />
             <p>Aucun signal vidéo direct détecté.</p>
             <p className="text-xs mt-1">Veuillez sélectionner un match ci-dessous.</p>
+            <div className="mt-4 p-3 bg-brand-800/30 border border-brand-700/50 rounded-xl text-[10px] text-slate-400 max-w-xs">
+                <span className="text-brand-accent font-black block mb-1 uppercase">Note Pro</span>
+                Si vous voyez "Vidéo non disponible", essayez de changer de serveur ou d'ouvrir le lien externe.
+                <button 
+                  onClick={() => setShowTroubleshooting(true)}
+                  className="mt-2 text-brand-accent underline block font-bold"
+                >
+                  Dépannage Vidéo
+                </button>
+            </div>
           </div>
         )}
       </div>
 
+      {/* Troubleshooting Modal */}
+      {showTroubleshooting && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+          <div className="bg-brand-800 w-full max-w-md rounded-2xl border border-brand-700 p-6 shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black text-white flex items-center gap-2">
+                <ShieldCheck className="text-brand-accent" />
+                Dépannage Vidéo
+              </h3>
+              <button onClick={() => setShowTroubleshooting(false)} className="p-2 hover:bg-brand-700 rounded-full text-slate-400">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="p-4 bg-brand-900/50 border border-brand-700 rounded-xl">
+                <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                  <Ban className="text-red-500" size={16} />
+                  Vidéo Restreinte ?
+                </h4>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Certaines vidéos YouTube sont restreintes par les administrateurs réseau ou Google Workspace. Voici comment contourner cela :
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3">
+                <button 
+                  onClick={() => { switchSource('server4'); setShowTroubleshooting(false); }}
+                  className="flex items-center justify-between p-4 bg-orange-600/10 border border-orange-600/30 rounded-xl hover:bg-orange-600/20 transition-all text-left"
+                >
+                  <div>
+                    <div className="text-sm font-bold text-orange-500">Utiliser le Serveur Anti-Blocage</div>
+                    <div className="text-[10px] text-slate-500">Utilise youtube-nocookie.com pour contourner certaines restrictions.</div>
+                  </div>
+                  <ChevronDown className="-rotate-90 text-orange-500" size={16} />
+                </button>
+
+                <button 
+                  onClick={() => { switchSource('server5'); setShowTroubleshooting(false); }}
+                  className="flex items-center justify-between p-4 bg-purple-600/10 border border-purple-600/30 rounded-xl hover:bg-purple-600/20 transition-all text-left"
+                >
+                  <div>
+                    <div className="text-sm font-bold text-purple-500">Serveur TV (VidSrc)</div>
+                    <div className="text-[10px] text-slate-500">Serveur optimisé pour les flux TV et films.</div>
+                  </div>
+                  <ChevronDown className="-rotate-90 text-purple-500" size={16} />
+                </button>
+
+                <button 
+                  onClick={() => { switchSource('server6'); setShowTroubleshooting(false); }}
+                  className="flex items-center justify-between p-4 bg-blue-600/10 border border-blue-600/30 rounded-xl hover:bg-blue-600/20 transition-all text-left"
+                >
+                  <div>
+                    <div className="text-sm font-bold text-blue-500">Serveur Global (Embed.su)</div>
+                    <div className="text-[10px] text-slate-500">Serveur de secours international sans restriction.</div>
+                  </div>
+                  <ChevronDown className="-rotate-90 text-blue-500" size={16} />
+                </button>
+
+                <button 
+                  onClick={() => { switchSource('server7'); setShowTroubleshooting(false); }}
+                  className="flex items-center justify-between p-4 bg-emerald-600/10 border border-emerald-600/30 rounded-xl hover:bg-emerald-600/20 transition-all text-left"
+                >
+                  <div>
+                    <div className="text-sm font-bold text-emerald-500">Serveur Invidious (Privé)</div>
+                    <div className="text-[10px] text-slate-500">Contourne les restrictions Workspace via une instance décentralisée.</div>
+                  </div>
+                  <ChevronDown className="-rotate-90 text-emerald-500" size={16} />
+                </button>
+
+                <button 
+                  onClick={() => { switchSource('proxy'); setShowTroubleshooting(false); }}
+                  className="flex items-center justify-between p-4 bg-blue-600/10 border border-blue-600/30 rounded-xl hover:bg-blue-600/20 transition-all text-left"
+                >
+                  <div>
+                    <div className="text-sm font-bold text-blue-500">Serveur Proxy Piped</div>
+                    <div className="text-[10px] text-slate-500">Interface alternative sans publicité ni restriction Google.</div>
+                  </div>
+                  <ChevronDown className="-rotate-90 text-blue-500" size={16} />
+                </button>
+
+                <button 
+                  onClick={() => { setShowDirectInput(true); setShowTroubleshooting(false); }}
+                  className="flex items-center justify-between p-4 bg-brand-accent/10 border border-brand-accent/30 rounded-xl hover:bg-brand-accent/20 transition-all text-left"
+                >
+                  <div>
+                    <div className="text-sm font-bold text-brand-accent">Lien Direct Personnel</div>
+                    <div className="text-[10px] text-slate-500">Entrez votre propre lien de streaming direct.</div>
+                  </div>
+                  <ChevronDown className="-rotate-90 text-brand-accent" size={16} />
+                </button>
+
+                <button 
+                  onClick={() => { setCurrentSource('server9'); setShowTroubleshooting(false); }}
+                  className="flex items-center justify-between p-4 bg-emerald-600/10 border border-emerald-600/30 rounded-xl hover:bg-emerald-600/20 transition-all text-left"
+                >
+                  <div>
+                    <div className="text-sm font-bold text-emerald-500">Serveur Invidious (Projet Segfault)</div>
+                    <div className="text-[10px] text-slate-500">Instance alternative pour contourner les restrictions Google.</div>
+                  </div>
+                  <ChevronDown className="-rotate-90 text-emerald-500" size={16} />
+                </button>
+
+                <button 
+                  onClick={() => { setCurrentSource('server10'); setShowTroubleshooting(false); }}
+                  className="flex items-center justify-between p-4 bg-purple-600/10 border border-purple-600/30 rounded-xl hover:bg-purple-600/20 transition-all text-left"
+                >
+                  <div>
+                    <div className="text-sm font-bold text-purple-500">Serveur Invidious (IO LOL)</div>
+                    <div className="text-[10px] text-slate-500">Une autre instance robuste pour le streaming direct.</div>
+                  </div>
+                  <ChevronDown className="-rotate-90 text-purple-500" size={16} />
+                </button>
+
+                <button 
+                  onClick={() => { setCurrentSource('server11'); setShowTroubleshooting(false); }}
+                  className="flex items-center justify-between p-4 bg-emerald-600/10 border border-emerald-600/30 rounded-xl hover:bg-emerald-600/20 transition-all text-left"
+                >
+                  <div>
+                    <div className="text-sm font-bold text-emerald-500">Serveur Invidious (Tux.rs)</div>
+                    <div className="text-[10px] text-slate-500">Instance rapide et sécurisée pour le live.</div>
+                  </div>
+                  <ChevronDown className="-rotate-90 text-emerald-500" size={16} />
+                </button>
+
+                <button 
+                  onClick={() => { setCurrentSource('server12'); setShowTroubleshooting(false); }}
+                  className="flex items-center justify-between p-4 bg-blue-600/10 border border-blue-600/30 rounded-xl hover:bg-blue-600/20 transition-all text-left"
+                >
+                  <div>
+                    <div className="text-sm font-bold text-blue-500">Serveur Invidious (Namazso)</div>
+                    <div className="text-[10px] text-slate-500">Instance européenne haute performance.</div>
+                  </div>
+                  <ChevronDown className="-rotate-90 text-blue-500" size={16} />
+                </button>
+
+                <button 
+                  onClick={() => { setCurrentSource('server13'); setShowTroubleshooting(false); }}
+                  className="flex items-center justify-between p-4 bg-orange-600/10 border border-orange-600/30 rounded-xl hover:bg-orange-600/20 transition-all text-left"
+                >
+                  <div>
+                    <div className="text-sm font-bold text-orange-500">Serveur Invidious (Puffyan)</div>
+                    <div className="text-[10px] text-slate-500">Instance stable pour contourner les blocages.</div>
+                  </div>
+                  <ChevronDown className="-rotate-90 text-orange-500" size={16} />
+                </button>
+
+                <button 
+                  onClick={() => { window.open(`https://www.youtube.com/watch?v=${activeVideoId}`, '_blank'); setShowTroubleshooting(false); }}
+                  className="flex items-center justify-between p-4 bg-blue-600/10 border border-blue-600/30 rounded-xl hover:bg-blue-600/20 transition-all text-left"
+                >
+                  <div>
+                    <div className="text-sm font-bold text-blue-500">Ouvrir en Externe</div>
+                    <div className="text-[10px] text-slate-500">Ouvre la vidéo directement dans l'application YouTube.</div>
+                  </div>
+                  <ExternalLink className="text-blue-500" size={16} />
+                </button>
+              </div>
+
+              <div className="p-4 bg-brand-900/50 border border-brand-700 rounded-xl">
+                <p className="text-[10px] text-slate-500 italic">
+                  Note : Si vous êtes sur un réseau d'entreprise ou scolaire, les restrictions peuvent être appliquées au niveau du pare-feu. Dans ce cas, l'utilisation du Serveur Proxy est recommandée.
+                </p>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setShowTroubleshooting(false)}
+              className="w-full mt-6 py-4 bg-brand-700 text-white rounded-xl font-black uppercase text-xs hover:bg-brand-600 transition-all"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Source Selection & Search */}
       <div className="p-4 space-y-4">
           <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+              <button 
+                onClick={() => { setSearchQuery('football live match direct'); handleSearch(undefined, 'football live match direct'); }}
+                className="flex-shrink-0 flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-black uppercase bg-red-600 text-white shadow-lg shadow-red-600/30 animate-pulse"
+              >
+                  <Signal size={14} /> DIRECT LIVE
+              </button>
               <button 
                 onClick={() => switchSource('server1')}
                 className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${currentSource === 'server1' ? 'bg-brand-accent text-brand-900 shadow-lg shadow-brand-accent/20' : 'bg-brand-800 text-slate-400 border border-brand-700'}`}
@@ -287,6 +543,66 @@ const VideoHub: React.FC<VideoHubProps> = ({ matches, searchQuery: externalSearc
                   <ShieldCheck size={14} /> Serveur 4 (Anti-Blocage)
               </button>
               <button 
+                onClick={() => switchSource('server5')}
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${currentSource === 'server5' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'bg-brand-800 text-slate-400 border border-brand-700'}`}
+              >
+                  <Video size={14} /> Serveur 5 (TV)
+              </button>
+              <button 
+                onClick={() => switchSource('server6')}
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${currentSource === 'server6' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-brand-800 text-slate-400 border border-brand-700'}`}
+              >
+                  <Globe size={14} /> Serveur 6 (Global)
+              </button>
+              <button 
+                onClick={() => switchSource('server7')}
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${currentSource === 'server7' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'bg-brand-800 text-slate-400 border border-brand-700'}`}
+              >
+                  <ShieldCheck size={14} /> Serveur 7 (Invidious)
+              </button>
+              <button 
+                onClick={() => switchSource('server8')}
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${currentSource === 'server8' ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/20' : 'bg-brand-800 text-slate-400 border border-brand-700'}`}
+              >
+                  <ShieldCheck size={14} /> Serveur 8 (Yewtu.be)
+              </button>
+              <button 
+                onClick={() => switchSource('server9')}
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${currentSource === 'server9' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'bg-brand-800 text-slate-400 border border-brand-700'}`}
+              >
+                  <ShieldCheck size={14} /> Serveur 9 (Invidious 2)
+              </button>
+              <button 
+                onClick={() => switchSource('server10')}
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${currentSource === 'server10' ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20' : 'bg-brand-800 text-slate-400 border border-brand-700'}`}
+              >
+                  <ShieldCheck size={14} /> Serveur 10
+              </button>
+              <button 
+                onClick={() => switchSource('server11')}
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${currentSource === 'server11' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'bg-brand-800 text-slate-400 border border-brand-700'}`}
+              >
+                  <ShieldCheck size={14} /> Serveur 11
+              </button>
+              <button 
+                onClick={() => switchSource('server12')}
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${currentSource === 'server12' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-brand-800 text-slate-400 border border-brand-700'}`}
+              >
+                  <ShieldCheck size={14} /> Serveur 12
+              </button>
+              <button 
+                onClick={() => switchSource('server13')}
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${currentSource === 'server13' ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'bg-brand-800 text-slate-400 border border-brand-700'}`}
+              >
+                  <ShieldCheck size={14} /> Serveur 13
+              </button>
+              <button 
+                onClick={() => setShowDirectInput(!showDirectInput)}
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${showDirectInput ? 'bg-brand-accent text-brand-900 shadow-lg shadow-brand-accent/20' : 'bg-brand-800 text-slate-400 border border-brand-700'}`}
+              >
+                  <ExternalLink size={14} /> Lien Direct
+              </button>
+              <button 
                 onClick={() => setCurrentSource('proxy')}
                 className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${currentSource === 'proxy' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'bg-brand-800 text-slate-400 border border-brand-700'}`}
               >
@@ -305,6 +621,38 @@ const VideoHub: React.FC<VideoHubProps> = ({ matches, searchQuery: externalSearc
                   <Film size={14} /> Films Illimités
               </button>
           </div>
+
+          <AnimatePresence>
+            {showDirectInput && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="p-4 bg-brand-800 border border-brand-accent/30 rounded-2xl shadow-xl"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <Globe size={16} className="text-brand-accent" />
+                  <span className="text-xs font-black text-white uppercase">Lien Vidéo Direct (Streaming/TV)</span>
+                </div>
+                <div className="flex gap-2">
+                  <input 
+                    type="text"
+                    value={directUrl}
+                    onChange={(e) => setDirectUrl(e.target.value)}
+                    placeholder="Collez l'URL du flux (m3u8, mp4, embed...)"
+                    className="flex-1 bg-brand-900 border border-brand-700 text-white px-4 py-3 rounded-xl text-xs focus:outline-none focus:border-brand-accent"
+                  />
+                  <button 
+                    onClick={() => switchSource('direct')}
+                    className="bg-brand-accent text-brand-900 px-4 py-3 rounded-xl font-black uppercase text-xs hover:bg-emerald-400 transition-all"
+                  >
+                    Lire
+                  </button>
+                </div>
+                <p className="text-[9px] text-slate-500 mt-2 italic">Note: Utilisez des liens HTTPS pour une meilleure compatibilité.</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <form onSubmit={handleSearch} className="relative">
               <input 
@@ -452,7 +800,7 @@ const VideoHub: React.FC<VideoHubProps> = ({ matches, searchQuery: externalSearc
           </div>
 
           {/* View More Button */}
-          {(((currentSource === 'serp' || currentSource === 'films') && serpVideos.length > visibleCount) || (currentSource !== 'serp' && currentSource !== 'films' && (youtubeVideos.length > visibleCount || nextPageToken))) && (
+          {(((currentSource === 'serp' || currentSource === 'films') && (serpVideos.length > visibleCount || serpVideos.length >= 10)) || (currentSource !== 'serp' && currentSource !== 'films' && (youtubeVideos.length > visibleCount || nextPageToken))) && (
               <div className="flex justify-center mt-6">
                   <button 
                     onClick={handleViewMore}

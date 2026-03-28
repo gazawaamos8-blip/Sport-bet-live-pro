@@ -1,23 +1,42 @@
 
-import React, { useState } from 'react';
-import { X, Smartphone, ArrowDown, ArrowUp, ShieldCheck, AlertCircle, Ban, CreditCard, Wallet, Bitcoin, Globe, QrCode, Copy, Check, ChevronDown, Lock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Smartphone, ArrowDown, ArrowUp, ShieldCheck, AlertCircle, Ban, CreditCard, Wallet, Bitcoin, Globe, QrCode, Copy, Check, ChevronDown, Lock, History, ExternalLink, RefreshCw, Info, ShoppingBag } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { initiatePayment } from '../services/flutterwaveService';
-import { initiateCinetPayPayment } from '../services/cinetpayService';
-import { db } from '../services/database'; // Use centralized DB
+import { initiateCinetPayPayment, checkCinetPayStatus } from '../services/cinetpayService';
+import { db, Transaction } from '../services/database'; // Use centralized DB
 import { t } from '../services/localization';
+import { AppSection } from '../types';
 
 interface WalletModalProps {
   isOpen: boolean;
   onClose: () => void;
   onTransaction: (amount: number, type: 'deposit' | 'withdraw', provider: string, status?: 'success' | 'failed') => void;
+  onNavigate?: (section: AppSection) => void;
 }
 
-const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransaction }) => {
+const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransaction, onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [paymentMethod, setPaymentMethod] = useState<'momo' | 'card' | 'paypal' | 'crypto' | 'cinetpay'>('momo');
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState('1000');
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{type: 'error' | 'success' | 'info', text: string} | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [pendingTransactionId, setPendingTransactionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setRecentTransactions(db.getTransactions().slice(0, 5));
+      
+      // Auto-fill phone number from user profile
+      const user = db.getUser();
+      if (user && user.phone) {
+        setPhone(user.phone);
+      }
+    }
+  }, [isOpen]);
 
   // --- Specific Input States ---
   // Mobile Money
@@ -104,7 +123,7 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransactio
         
         // Use provided phone or fallback to user phone
         const payerPhone = phone || user?.phone || '600000000';
-        const payerEmail = email || `user${payerPhone}@sportbet.pro`; // Fake email if not provided, required by FW
+        const payerEmail = email || `user${payerPhone}@sportbot.app`; // Fake email if not provided, required by FW
         const payerName = user?.name || "Parieur SportBot";
 
         initiatePayment({
@@ -138,14 +157,44 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransactio
 
     // CINETPAY INTEGRATION
     if (activeTab === 'deposit' && paymentMethod === 'cinetpay') {
+        const depositAmount = Number(amount);
+        if (depositAmount < 100) {
+            setStatusMsg({ type: 'error', text: "Le montant minimum pour CinetPay est de 100 F." });
+            setLoading(false);
+            return;
+        }
+
+        const user = db.getUser();
+        const txId = `SB${Date.now()}${Math.floor(Math.random() * 1000)}`;
+        setPendingTransactionId(txId);
+
         initiateCinetPayPayment({
-            amount: Number(amount),
+            transactionId: txId,
+            amount: depositAmount,
+            customerName: user?.name || "Client",
+            customerSurname: "SportBot",
+            customerEmail: user?.email || "client@sportbot.app",
+            customerPhone: phone || user?.phone || "690000000",
             onSuccess: (data) => {
-                finalizeTransaction(Number(amount), 'deposit', 'CinetPay');
+                finalizeTransaction(depositAmount, 'deposit', 'CinetPay');
             },
             onError: (err) => {
                 setLoading(false);
-                setStatusMsg({ type: 'error', text: "Erreur CinetPay: " + (typeof err === 'string' ? err : "Échec du paiement") });
+                const errorMsg = typeof err === 'string' ? err : "Échec du paiement";
+                const isDomainError = errorMsg.includes('UNKNOWN_ERROR') || errorMsg.includes('domaine');
+                
+                setStatusMsg({ 
+                    type: 'error', 
+                    text: `Erreur CinetPay: ${errorMsg}` 
+                });
+                
+                if (isDomainError) {
+                    console.warn("CinetPay Domain Error detected. Please whitelist:", window.location.origin);
+                }
+            },
+            onClose: () => {
+                setLoading(false);
+                setStatusMsg({ type: 'info', text: "Paiement CinetPay annulé. Si vous avez déjà payé, cliquez sur 'Vérifier le statut'." });
             }
         });
         return;
@@ -171,7 +220,26 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransactio
     }, 2500);
   };
 
-  const finalizeTransaction = (amt: number, type: 'deposit' | 'withdraw', provider: string) => {
+    const handleCheckStatus = async () => {
+        if (!pendingTransactionId) return;
+        setLoading(true);
+        try {
+            const data = await checkCinetPayStatus(pendingTransactionId);
+            if (data.code === '00' || data.message === 'SUCCES') {
+                finalizeTransaction(Number(amount), 'deposit', 'CinetPay');
+                setPendingTransactionId(null);
+                setStatusMsg({ type: 'success', text: "Paiement confirmé avec succès !" });
+            } else {
+                setStatusMsg({ type: 'info', text: `Statut: ${data.message || 'En attente'}. Si vous avez payé, réessayez dans un instant.` });
+            }
+        } catch (error) {
+            setStatusMsg({ type: 'error', text: "Erreur lors de la vérification du statut." });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const finalizeTransaction = (amt: number, type: 'deposit' | 'withdraw', provider: string) => {
       if (amt > 0) {
         // This updates DB and localStorage
         db.addTransaction({
@@ -182,131 +250,311 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransactio
         }).then(() => {
             // Callback to update Parent App State
             onTransaction(amt, type, provider, 'success');
+            setIsSuccess(true);
+            setLoading(false);
+            
+            // Show success for 3 seconds then close or reset
+            setTimeout(() => {
+                setIsSuccess(false);
+                setAmount('');
+                onClose();
+            }, 3000);
         });
+      } else {
+        setLoading(false);
+        setAmount('');
+        onClose();
       }
-      setLoading(false);
-      setAmount('');
-      onClose();
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/90 backdrop-blur-md">
-      <div className="bg-brand-800 w-full md:max-w-lg md:rounded-2xl rounded-t-3xl border-t md:border border-brand-600 shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+      <motion.div 
+        initial={{ y: "100%", opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: "100%", opacity: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        className="bg-brand-800 w-full md:max-w-lg md:rounded-2xl rounded-t-3xl border-t md:border border-brand-600 shadow-2xl overflow-hidden flex flex-col max-h-[95vh]"
+      >
         
         {/* Header */}
         <div className="p-5 flex justify-between items-center bg-brand-900 border-b border-brand-700">
-          <div>
-            <h3 className="font-black text-xl text-white flex items-center gap-2">
-              <ShieldCheck className="text-brand-accent" />
-              Caisse Pro
-            </h3>
-            <p className="text-xs text-slate-400 mt-1">Transactions sécurisées & cryptées SSL</p>
+          <div className="flex items-center gap-3">
+            <div className="bg-brand-accent/10 p-2 rounded-xl">
+              <ShieldCheck className="text-brand-accent" size={24} />
+            </div>
+            <div>
+              <h3 className="font-black text-xl text-white">
+                Caisse Pro
+              </h3>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Transactions Sécurisées</p>
+            </div>
           </div>
-          <button onClick={handleCancel} type="button" className="p-2 bg-brand-800 rounded-full hover:bg-red-500/20 hover:text-red-500 transition-colors">
-            <X size={20} className="text-white hover:text-red-500" />
-          </button>
+          <div className="flex items-center gap-2">
+            {onNavigate && (
+              <button 
+                onClick={() => { onNavigate(AppSection.PROMOTIONS); onClose(); }}
+                className="flex items-center gap-2 px-3 py-1.5 bg-brand-accent/10 text-brand-accent rounded-full border border-brand-accent/20 hover:bg-brand-accent/20 transition-all"
+              >
+                <ShoppingBag size={14} />
+                <span className="text-[10px] font-black uppercase">Voir ma boutique</span>
+              </button>
+            )}
+            <button 
+              onClick={() => setShowHistory(!showHistory)}
+              className={`p-2 rounded-full transition-all ${showHistory ? 'bg-brand-accent text-brand-900' : 'bg-brand-800 text-slate-400 hover:text-white'}`}
+              title="Historique"
+            >
+              <History size={20} />
+            </button>
+            <button onClick={handleCancel} type="button" className="p-2 bg-brand-800 rounded-full hover:bg-red-500/20 hover:text-red-500 transition-colors">
+              <X size={20} className="text-white hover:text-red-500" />
+            </button>
+          </div>
         </div>
+
+        {/* Success State Overlay */}
+        <AnimatePresence>
+          {isSuccess && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 bg-brand-900 flex flex-col items-center justify-center p-6 text-center"
+            >
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", damping: 12 }}
+                className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20"
+              >
+                <Check size={48} className="text-white" strokeWidth={4} />
+              </motion.div>
+              <h2 className="text-2xl font-black text-white mb-2">Transaction Réussie !</h2>
+              <p className="text-slate-400 mb-8 max-w-xs">Votre {activeTab === 'deposit' ? 'dépôt' : 'retrait'} de <span className="text-brand-accent font-bold">{Number(amount).toLocaleString()} XAF</span> a été traité avec succès.</p>
+              <div className="w-full h-1 bg-brand-700 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: "0%" }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 3 }}
+                  className="h-full bg-brand-accent"
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* History View */}
+        <AnimatePresence>
+          {showHistory && (
+            <motion.div 
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              className="absolute inset-0 z-40 bg-brand-800 flex flex-col"
+            >
+              <div className="p-5 flex justify-between items-center bg-brand-900 border-b border-brand-700">
+                <h3 className="font-bold text-white flex items-center gap-2">
+                  <History size={18} className="text-brand-accent" />
+                  Historique Récent
+                </h3>
+                <button onClick={() => setShowHistory(false)} className="p-2 hover:bg-brand-700 rounded-full text-slate-400">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {recentTransactions.length > 0 ? (
+                  recentTransactions.map((tx) => (
+                    <div key={tx.id} className="bg-brand-900/50 border border-brand-700 p-3 rounded-xl flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${tx.type === 'deposit' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                          {tx.type === 'deposit' ? <ArrowDown size={16} /> : <ArrowUp size={16} />}
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-white">{tx.provider || 'Système'}</div>
+                          <div className="text-[10px] text-slate-500">{new Date(tx.date).toLocaleString()}</div>
+                        </div>
+                      </div>
+                      <div className={`font-mono font-bold ${tx.type === 'deposit' ? 'text-emerald-500' : 'text-red-500'}`}>
+                        {tx.type === 'deposit' ? '+' : '-'}{tx.amount.toLocaleString()} F
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-slate-500 opacity-50">
+                    <History size={48} className="mb-2" />
+                    <p className="text-sm font-bold">Aucune transaction récente</p>
+                  </div>
+                )}
+              </div>
+              <div className="p-4 border-t border-brand-700">
+                <button 
+                  onClick={() => setShowHistory(false)}
+                  className="w-full py-3 bg-brand-700 text-white rounded-xl font-bold text-sm hover:bg-brand-600 transition-colors"
+                >
+                  Retour à la caisse
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Status Message */}
         {statusMsg && (
-          <div className={`p-3 text-center text-xs font-bold flex items-center justify-center gap-2 animate-pulse ${
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            className={`p-3 text-center text-xs font-bold flex flex-col items-center justify-center gap-2 ${
               statusMsg.type === 'error' ? 'bg-red-500/20 text-red-500' : 
+              statusMsg.type === 'info' ? 'bg-blue-500/20 text-blue-400' :
               'bg-green-500/20 text-green-500'
-            }`}>
-            {statusMsg.type === 'error' ? <AlertCircle size={16} /> : <Check size={16} />}
-            {statusMsg.text}
-          </div>
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              {statusMsg.type === 'error' ? <AlertCircle size={16} /> : statusMsg.type === 'info' ? <RefreshCw size={16} className="animate-spin" /> : <Check size={16} />}
+              {statusMsg.text}
+              {statusMsg.type === 'error' && (
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(statusMsg.text);
+                    alert("Message d'erreur copié !");
+                  }}
+                  className="ml-2 p-1 hover:bg-red-500/20 rounded"
+                >
+                  <Copy size={12} />
+                </button>
+              )}
+            </div>
+            
+            {statusMsg.type === 'error' && statusMsg.text.includes('CinetPay') && (statusMsg.text.includes('UNKNOWN_ERROR') || statusMsg.text.includes('domaine')) && (
+              <div className="mt-2 p-3 bg-brand-900/80 border border-red-500/30 rounded-xl w-full max-w-xs animate-pulse">
+                <p className="text-[10px] text-slate-400 mb-2 uppercase tracking-widest">URL à autoriser dans CinetPay :</p>
+                <div className="flex items-center gap-2 bg-black/50 p-2 rounded border border-white/5 overflow-hidden">
+                  <code className="text-[9px] text-brand-accent truncate flex-1">{window.location.origin}</code>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.origin);
+                      alert("URL copiée ! Ajoutez-la à votre dashboard CinetPay.");
+                    }}
+                    className="p-1.5 bg-brand-accent/20 rounded hover:bg-brand-accent/40 transition-colors"
+                  >
+                    <Copy size={10} className="text-brand-accent" />
+                  </button>
+                </div>
+                <p className="text-[8px] text-slate-500 mt-2 italic">Connectez-vous à votre dashboard CinetPay &gt; Configuration &gt; Domaines autorisés</p>
+              </div>
+            )}
+          </motion.div>
         )}
 
         {/* Tabs */}
         <div className="flex p-4 gap-4 bg-brand-800 border-b border-brand-700">
           <button
             onClick={() => { setActiveTab('deposit'); setStatusMsg(null); }}
-            className={`flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all border-2 ${
+            className={`flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all relative overflow-hidden ${
               activeTab === 'deposit' 
-                ? 'bg-brand-accent border-brand-accent text-brand-900' 
-                : 'bg-transparent border-brand-700 text-slate-400'
+                ? 'bg-brand-accent text-brand-900 shadow-lg shadow-brand-accent/20' 
+                : 'bg-brand-900 text-slate-400 border border-brand-700'
             }`}
           >
             <ArrowDown size={18} /> {t('deposit')}
+            {activeTab === 'deposit' && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 right-0 h-1 bg-brand-900/20" />}
           </button>
           <button
             onClick={() => { setActiveTab('withdraw'); setStatusMsg(null); }}
-            className={`flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all border-2 ${
+            className={`flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all relative overflow-hidden ${
               activeTab === 'withdraw' 
-                ? 'bg-white border-white text-brand-900' 
-                : 'bg-transparent border-brand-700 text-slate-400'
+                ? 'bg-brand-accent text-brand-900 shadow-lg shadow-brand-accent/20' 
+                : 'bg-brand-900 text-slate-400 border border-brand-700'
             }`}
           >
             <ArrowUp size={18} /> {t('withdraw')}
+            {activeTab === 'withdraw' && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 right-0 h-1 bg-brand-900/20" />}
           </button>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6 flex-1 overflow-y-auto">
           
+          {/* Pending Transaction Banner */}
+          {pendingTransactionId && paymentMethod === 'cinetpay' && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 bg-brand-accent/10 border border-brand-accent/30 rounded-2xl flex flex-col gap-3"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-brand-accent/20 p-2 rounded-lg animate-pulse">
+                  <RefreshCw className="text-brand-accent" size={18} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-black text-white uppercase tracking-wider">Transaction en attente</p>
+                  <p className="text-[10px] text-slate-400 font-bold">ID: {pendingTransactionId}</p>
+                </div>
+                <button 
+                  onClick={() => setPendingTransactionId(null)}
+                  className="text-slate-500 hover:text-white transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={handleCheckStatus}
+                disabled={loading}
+                className="w-full py-2.5 bg-brand-accent text-brand-900 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-400 transition-all flex items-center justify-center gap-2"
+              >
+                {loading ? <RefreshCw size={12} className="animate-spin" /> : <ShieldCheck size={12} />}
+                Vérifier le statut maintenant
+              </button>
+            </motion.div>
+          )}
+
           {/* Payment Method Selector */}
           <div className="space-y-3">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('paymentMethod')}</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('paymentMethod')}</label>
+                <span className="text-[10px] text-brand-accent font-bold flex items-center gap-1">
+                  <Lock size={10} /> 256-bit SSL
+                </span>
+              </div>
               <div className="grid grid-cols-2 gap-3">
-                  <div 
-                    onClick={() => setPaymentMethod('momo')}
-                    className={`p-3 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${paymentMethod === 'momo' ? 'bg-brand-700 border-brand-accent shadow-lg' : 'bg-brand-900 border-brand-700 hover:border-slate-500'}`}
-                  >
-                      <div className="bg-orange-500 text-white p-2 rounded-lg"><Smartphone size={20} /></div>
-                      <div>
-                          <div className="font-bold text-white text-sm">Mobile Money</div>
-                          <div className="text-[10px] text-slate-400">Orange / MTN</div>
-                      </div>
-                  </div>
-
-                  <div 
-                    onClick={() => setPaymentMethod('card')}
-                    className={`p-3 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${paymentMethod === 'card' ? 'bg-brand-700 border-brand-accent shadow-lg' : 'bg-brand-900 border-brand-700 hover:border-slate-500'}`}
-                  >
-                      <div className="bg-blue-600 text-white p-2 rounded-lg"><CreditCard size={20} /></div>
-                      <div>
-                          <div className="font-bold text-white text-sm">Carte Bancaire</div>
-                          <div className="text-[10px] text-slate-400">Visa / MC</div>
-                      </div>
-                  </div>
-
-                  <div 
-                    onClick={() => setPaymentMethod('cinetpay')}
-                    className={`p-3 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${paymentMethod === 'cinetpay' ? 'bg-brand-700 border-brand-accent shadow-lg' : 'bg-brand-900 border-brand-700 hover:border-slate-500'}`}
-                  >
-                      <div className="bg-emerald-600 text-white p-2 rounded-lg"><Globe size={20} /></div>
-                      <div>
-                          <div className="font-bold text-white text-sm">CinetPay</div>
-                          <div className="text-[10px] text-slate-400">MoMo / Card</div>
-                      </div>
-                  </div>
-
-                  <div 
-                    onClick={() => setPaymentMethod('paypal')}
-                    className={`p-3 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${paymentMethod === 'paypal' ? 'bg-brand-700 border-brand-accent shadow-lg' : 'bg-brand-900 border-brand-700 hover:border-slate-500'}`}
-                  >
-                      <div className="bg-[#003087] text-white p-2 rounded-lg"><Wallet size={20} /></div>
-                      <div>
-                          <div className="font-bold text-white text-sm">PayPal</div>
-                          <div className="text-[10px] text-slate-400">Instant</div>
-                      </div>
-                  </div>
-
-                  <div 
-                    onClick={() => setPaymentMethod('crypto')}
-                    className={`p-3 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${paymentMethod === 'crypto' ? 'bg-brand-700 border-brand-accent shadow-lg' : 'bg-brand-900 border-brand-700 hover:border-slate-500'}`}
-                  >
-                      <div className="bg-yellow-500 text-white p-2 rounded-lg"><Bitcoin size={20} /></div>
-                      <div>
-                          <div className="font-bold text-white text-sm">Crypto</div>
-                          <div className="text-[10px] text-slate-400">BTC / USDT</div>
-                      </div>
-                  </div>
+                  {[
+                    { id: 'momo', label: 'Mobile Money', sub: 'Orange / MTN', icon: <Smartphone size={20} />, color: 'bg-orange-500' },
+                    { id: 'card', label: 'Carte Bancaire', sub: 'Visa / MC', icon: <CreditCard size={20} />, color: 'bg-blue-600' },
+                    { id: 'cinetpay', label: 'CinetPay', sub: 'MoMo / Card', icon: <Globe size={20} />, color: 'bg-emerald-600' },
+                    { id: 'paypal', label: 'PayPal', sub: 'Instant', icon: <Wallet size={20} />, color: 'bg-[#003087]' },
+                    { id: 'crypto', label: 'Crypto', sub: 'BTC / USDT', icon: <Bitcoin size={20} />, color: 'bg-yellow-500' }
+                  ].map((method) => (
+                    <motion.div 
+                      key={method.id}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setPaymentMethod(method.id as any)}
+                      className={`p-3 rounded-2xl border-2 flex items-center gap-3 cursor-pointer transition-all relative group ${
+                        paymentMethod === method.id 
+                          ? 'bg-brand-700 border-brand-accent shadow-xl shadow-brand-accent/5' 
+                          : 'bg-brand-900 border-brand-700 hover:border-brand-600'
+                      }`}
+                    >
+                        <div className={`${method.color} text-white p-2.5 rounded-xl shadow-lg`}>
+                          {method.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="font-black text-white text-xs truncate">{method.label}</div>
+                            <div className="text-[9px] text-slate-500 font-bold uppercase">{method.sub}</div>
+                        </div>
+                        {paymentMethod === method.id && (
+                          <div className="absolute top-2 right-2">
+                            <div className="w-2 h-2 bg-brand-accent rounded-full animate-pulse" />
+                          </div>
+                        )}
+                    </motion.div>
+                  ))}
               </div>
           </div>
 
-          <div className="h-px bg-brand-700/50"></div>
+          <div className="h-px bg-gradient-to-r from-transparent via-brand-700 to-transparent"></div>
 
           {/* DYNAMIC FIELDS based on Method */}
           
@@ -422,16 +670,16 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransactio
                  </div>
 
                  {activeTab === 'deposit' ? (
-                     <div className="bg-white p-4 rounded-xl flex items-center gap-4">
-                         <div className="bg-black p-1 rounded">
-                             <QrCode size={60} className="text-white"/>
+                     <div className="bg-brand-700 p-4 rounded-xl flex items-center gap-4 border border-brand-600">
+                         <div className="bg-white p-1 rounded">
+                             <QrCode size={60} className="text-brand-900"/>
                          </div>
                          <div className="flex-1 overflow-hidden">
-                             <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Adresse de dépôt {cryptoNetwork}</p>
-                             <p className="text-xs font-mono font-bold text-slate-800 break-all bg-slate-100 p-2 rounded mb-2">
+                             <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Adresse de dépôt {cryptoNetwork}</p>
+                             <p className="text-xs font-mono font-bold text-white break-all bg-brand-900 p-2 rounded mb-2 border border-brand-800">
                                  {DEPOSIT_ADDRESSES[cryptoNetwork]}
                              </p>
-                             <button type="button" onClick={handleCopy} className="text-[10px] bg-slate-900 text-white px-2 py-1 rounded flex items-center gap-1 hover:bg-slate-700">
+                             <button type="button" onClick={handleCopy} className="text-[10px] bg-brand-accent text-brand-900 px-2 py-1 rounded flex items-center gap-1 hover:bg-emerald-400 font-bold">
                                  {copiedAddress ? <Check size={10} /> : <Copy size={10} />} {copiedAddress ? 'Copié' : 'Copier'}
                              </button>
                          </div>
@@ -452,45 +700,75 @@ const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose, onTransactio
           )}
 
           {/* Amount Field (Common) */}
-          <div className="space-y-2 pt-2 border-t border-brand-700/50">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    {activeTab === 'deposit' ? 'Montant à Déposer' : 'Montant à Retirer'} (XAF)
-                </label>
-                <div className="relative">
-                <input 
-                    type="number" 
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="w-full bg-brand-900 border-2 border-brand-700 rounded-xl py-4 px-4 text-white font-mono text-2xl font-bold text-center focus:border-brand-accent focus:outline-none transition-colors"
-                    placeholder="1000"
-                    min="100"
-                />
+          <div className="space-y-4 pt-2 border-t border-brand-700/50">
+                <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                        {activeTab === 'deposit' ? 'Montant à Déposer' : 'Montant à Retirer'}
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-bold">MIN: 100 XAF</span>
                 </div>
-                <div className="flex justify-between gap-2">
+                <div className="relative group">
+                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-brand-accent font-black text-2xl">F</div>
+                    <input 
+                        type="number" 
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="w-full bg-brand-900 border-2 border-brand-700 rounded-2xl py-6 pl-12 pr-6 text-white font-mono text-4xl font-black text-right focus:border-brand-accent focus:outline-none transition-all shadow-inner group-hover:border-brand-600"
+                        placeholder="1000"
+                        min="100"
+                    />
+                </div>
+                <div className="grid grid-cols-4 gap-2">
                 {[1000, 5000, 10000, 50000].map(val => (
-                    <button key={val} type="button" onClick={() => setAmount(val.toString())} className="flex-1 py-2 bg-brand-700 rounded-lg text-[10px] md:text-xs font-bold text-brand-accent hover:bg-brand-600 transition-colors">
-                    +{val.toLocaleString()}
+                    <button 
+                        key={val} 
+                        type="button" 
+                        onClick={() => setAmount(val.toString())} 
+                        className="py-3 bg-brand-900 border border-brand-700 rounded-xl text-[10px] font-black text-brand-accent hover:bg-brand-accent hover:text-brand-900 transition-all active:scale-95"
+                    >
+                        +{val >= 1000 ? (val/1000) + 'K' : val}
                     </button>
                 ))}
                 </div>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-4 pt-4">
+              <div className="flex items-start gap-3 p-4 bg-brand-900/50 border border-brand-700 rounded-2xl">
+                  <Info className="text-brand-accent flex-shrink-0 mt-0.5" size={16} />
+                  <p className="text-[10px] text-slate-400 leading-relaxed">
+                      En cliquant sur le bouton ci-dessous, vous acceptez nos <span className="text-white font-bold underline cursor-pointer">Conditions d'Utilisation</span>. Les fonds seront crédités instantanément après confirmation.
+                  </p>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-5 rounded-xl font-black text-lg uppercase tracking-wide shadow-xl transform active:scale-95 transition-all flex items-center justify-center gap-3 ${
+                className={`w-full py-5 rounded-2xl font-black text-lg uppercase tracking-widest shadow-2xl transform active:scale-95 transition-all flex items-center justify-center gap-3 ${
                   activeTab === 'deposit' 
-                    ? 'bg-brand-accent hover:bg-emerald-400 text-brand-900' 
-                    : 'bg-white hover:bg-slate-200 text-brand-900'
+                    ? 'bg-brand-accent hover:bg-emerald-400 text-brand-900 shadow-brand-accent/20' 
+                    : 'bg-brand-accent hover:bg-emerald-400 text-brand-900 shadow-brand-accent/20'
                 } ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                 {loading ? <div className="animate-spin h-6 w-6 border-4 border-current border-t-transparent rounded-full" /> : (activeTab === 'deposit' ? 'VALIDER LE PAIEMENT' : 'CONFIRMER LE RETRAIT')}
+                 {loading ? (
+                   <div className="flex items-center gap-3">
+                     <div className="animate-spin h-6 w-6 border-4 border-current border-t-transparent rounded-full" />
+                     <span>Traitement...</span>
+                   </div>
+                 ) : (
+                   <>
+                     {activeTab === 'deposit' ? <ArrowDown size={20} /> : <ArrowUp size={20} />}
+                     {activeTab === 'deposit' ? 'Valider le Paiement' : 'Confirmer le Retrait'}
+                   </>
+                 )}
               </button>
+              
+              <p className="text-center text-[10px] text-slate-500 font-bold flex items-center justify-center gap-2">
+                <Lock size={10} /> Paiement 100% Sécurisé par SportBot Pro
+              </p>
           </div>
 
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 };

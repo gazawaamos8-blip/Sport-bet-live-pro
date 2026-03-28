@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const images = [
-  "https://raw.githubusercontent.com/gazawaamos8-blip/Icon-sport-bet-pro/refs/heads/main/sportbet-icon%20(1).png",
+  "https://raw.githubusercontent.com/gazawaamos8-blip/Mon-icon-/refs/heads/main/sportbot-icon.png",
   "https://picsum.photos/seed/casino1/800/400",
   "https://picsum.photos/seed/casino2/800/400",
   "https://picsum.photos/seed/casino3/800/400",

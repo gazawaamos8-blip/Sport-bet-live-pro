@@ -70,7 +70,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
   };
 
   return (
-    <div className="bg-brand-800 rounded-2xl p-0 border border-brand-700 shadow-xl overflow-hidden relative group animate-fade-in hover:border-brand-600 transition-all">
+    <div className="bg-brand-800 rounded-2xl p-0 border border-brand-700 shadow-md overflow-hidden relative group animate-fade-in hover:border-brand-600 transition-all">
       {/* AI Prediction Overlay */}
       {aiPrediction && (
         <div className="absolute inset-0 z-30 bg-brand-900/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-fade-in">
@@ -97,8 +97,8 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
           <span className="text-xs font-bold text-slate-300 uppercase truncate max-w-[150px] flex items-center gap-1">
             {match.countryCode && (
               getFlag(match.countryCode).startsWith('http') 
-              ? <img src={getFlag(match.countryCode)} className="w-4 h-3 object-cover rounded-sm" alt="flag" referrerPolicy="no-referrer" />
-              : <span>{getFlag(match.countryCode)}</span>
+              ? <img src={getFlag(match.countryCode)} className="w-8 h-5 object-cover rounded-sm shadow-md border-2 border-brand-900" alt="flag" referrerPolicy="no-referrer" />
+              : <span className="text-sm">{getFlag(match.countryCode)}</span>
             )}
             {match.league}
           </span>
@@ -116,14 +116,15 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
           {/* Home */}
           <div className="flex flex-col items-center flex-1">
             <div className="relative group/team">
-              <div className="w-14 h-14 rounded-full bg-brand-700 p-1 border border-brand-600 flex items-center justify-center shadow-lg group-hover/team:scale-105 transition-transform">
-                <img src={match.homeLogo} alt={match.homeTeam} className="w-full h-full rounded-full object-cover" referrerPolicy="no-referrer" />
-              </div>
+              <img src={match.homeLogo} alt={match.homeTeam} className="w-12 h-12 rounded-full bg-brand-700 p-1 border border-brand-600 shadow-lg object-cover relative z-10" referrerPolicy="no-referrer" />
+              {match.status === 'live' && (
+                <div className="absolute top-0 right-0 bg-red-600 text-[6px] font-black text-white px-1 py-0.5 rounded-sm animate-pulse z-20 shadow-sm">LIVE</div>
+              )}
               {match.homeCountryCode && !match.homeLogo?.includes('flagcdn.com') && (
-                <div className="absolute -bottom-1 -right-1 shadow-md">
+                <div className="absolute -bottom-0.5 -right-0.5 shadow-sm z-20">
                   {getFlag(match.homeCountryCode).startsWith('http') 
-                    ? <img src={getFlag(match.homeCountryCode)} className="w-5 h-3.5 object-cover rounded-sm border border-brand-900" alt="flag" referrerPolicy="no-referrer" />
-                    : <span className="bg-brand-900 rounded-full px-1 text-[8px]">{getFlag(match.homeCountryCode)}</span>
+                    ? <img src={getFlag(match.homeCountryCode)} className="w-4 h-2.5 object-cover rounded-sm border border-brand-900" alt="flag" referrerPolicy="no-referrer" />
+                    : <span className="bg-brand-900 rounded-full px-0.5 text-[7px]">{getFlag(match.homeCountryCode)}</span>
                   }
                 </div>
               )}
@@ -142,14 +143,15 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
           {/* Away */}
           <div className="flex flex-col items-center flex-1">
             <div className="relative group/team">
-              <div className="w-14 h-14 rounded-full bg-brand-700 p-1 border border-brand-600 flex items-center justify-center shadow-lg group-hover/team:scale-105 transition-transform">
-                <img src={match.awayLogo} alt={match.awayTeam} className="w-full h-full rounded-full object-cover" referrerPolicy="no-referrer" />
-              </div>
+              <img src={match.awayLogo} alt={match.awayTeam} className="w-12 h-12 rounded-full bg-brand-700 p-1 border border-brand-600 shadow-lg object-cover relative z-10" referrerPolicy="no-referrer" />
+              {match.status === 'live' && (
+                <div className="absolute top-0 right-0 bg-red-600 text-[6px] font-black text-white px-1 py-0.5 rounded-sm animate-pulse z-20 shadow-sm">LIVE</div>
+              )}
               {match.awayCountryCode && !match.awayLogo?.includes('flagcdn.com') && (
-                <div className="absolute -bottom-1 -right-1 shadow-md">
+                <div className="absolute -bottom-0.5 -right-0.5 shadow-sm z-20">
                   {getFlag(match.awayCountryCode).startsWith('http') 
-                    ? <img src={getFlag(match.awayCountryCode)} className="w-5 h-3.5 object-cover rounded-sm border border-brand-900" alt="flag" referrerPolicy="no-referrer" />
-                    : <span className="bg-brand-900 rounded-full px-1 text-[8px]">{getFlag(match.awayCountryCode)}</span>
+                    ? <img src={getFlag(match.awayCountryCode)} className="w-4 h-2.5 object-cover rounded-sm border border-brand-900" alt="flag" referrerPolicy="no-referrer" />
+                    : <span className="bg-brand-900 rounded-full px-0.5 text-[7px]">{getFlag(match.awayCountryCode)}</span>
                   }
                 </div>
               )}
@@ -185,7 +187,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
                   sport: match.sport,
                   countryCode: match.countryCode,
                   homeCountryCode: match.homeCountryCode,
-                  awayCountryCode: match.awayCountryCode
+                  awayCountryCode: match.awayCountryCode,
+                  homeLogo: match.homeLogo,
+                  awayLogo: match.awayLogo
                 })}
                 className={`flex flex-col items-center bg-brand-900 hover:bg-brand-700 py-2 rounded-xl border border-brand-700 transition-all hover:border-brand-accent active:scale-95 group/btn ${opt.v === 0 || isSelectionLocked(opt.s) ? 'opacity-30 cursor-not-allowed' : ''}`}
               >
@@ -207,42 +211,48 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
           </div>
 
           {/* Over/Under 2.5 Market */}
-          <div className="grid grid-cols-2 gap-2 mt-2">
-              <button 
-                onClick={() => !isSelectionLocked('over2.5') && onAddToSlip?.({ 
-                  matchId: match.id, 
-                  selection: 'over2.5', 
-                  odds: 1.85, 
-                  matchInfo: `${match.homeTeam} vs ${match.awayTeam}`, 
-                  league: match.league,
-                  sport: match.sport,
-                  countryCode: match.countryCode,
-                  homeCountryCode: match.homeCountryCode,
-                  awayCountryCode: match.awayCountryCode
-                })}
-                className={`flex justify-between items-center bg-brand-900 hover:bg-brand-700 px-4 py-2.5 rounded-xl border border-brand-700 transition-all hover:border-brand-accent active:scale-95 group/btn ${isSelectionLocked('over2.5') ? 'opacity-30 cursor-not-allowed' : ''}`}
-              >
-                <span className="text-[10px] text-slate-500 font-bold uppercase group-hover/btn:text-brand-accent transition-colors">Plus (2.5)</span>
-                <span className="text-sm font-black text-white">1.85</span>
-              </button>
-              <button 
-                onClick={() => !isSelectionLocked('under2.5') && onAddToSlip?.({ 
-                  matchId: match.id, 
-                  selection: 'under2.5', 
-                  odds: 1.95, 
-                  matchInfo: `${match.homeTeam} vs ${match.awayTeam}`, 
-                  league: match.league,
-                  sport: match.sport,
-                  countryCode: match.countryCode,
-                  homeCountryCode: match.homeCountryCode,
-                  awayCountryCode: match.awayCountryCode
-                })}
-                className={`flex justify-between items-center bg-brand-900 hover:bg-brand-700 px-4 py-2.5 rounded-xl border border-brand-700 transition-all hover:border-brand-accent active:scale-95 group/btn ${isSelectionLocked('under2.5') ? 'opacity-30 cursor-not-allowed' : ''}`}
-              >
-                <span className="text-[10px] text-slate-500 font-bold uppercase group-hover/btn:text-brand-accent transition-colors">Moins (2.5)</span>
-                <span className="text-sm font-black text-white">1.95</span>
-              </button>
-          </div>
+          {match.overUnder25 && (
+            <div className="grid grid-cols-2 gap-2 mt-2">
+                <button 
+                  onClick={() => !isSelectionLocked('over2.5') && onAddToSlip?.({ 
+                    matchId: match.id, 
+                    selection: 'over2.5', 
+                    odds: match.overUnder25?.over || 1.85, 
+                    matchInfo: `${match.homeTeam} vs ${match.awayTeam}`, 
+                    league: match.league,
+                    sport: match.sport,
+                    countryCode: match.countryCode,
+                    homeCountryCode: match.homeCountryCode,
+                    awayCountryCode: match.awayCountryCode,
+                    homeLogo: match.homeLogo,
+                    awayLogo: match.awayLogo
+                  })}
+                  className={`flex justify-between items-center bg-brand-900 hover:bg-brand-700 px-4 py-2.5 rounded-xl border border-brand-700 transition-all hover:border-brand-accent active:scale-95 group/btn ${isSelectionLocked('over2.5') ? 'opacity-30 cursor-not-allowed' : ''}`}
+                >
+                  <span className="text-[10px] text-slate-500 font-bold uppercase group-hover/btn:text-brand-accent transition-colors">Plus (2.5)</span>
+                  <span className="text-sm font-black text-white">{match.overUnder25.over.toFixed(2)}</span>
+                </button>
+                <button 
+                  onClick={() => !isSelectionLocked('under2.5') && onAddToSlip?.({ 
+                    matchId: match.id, 
+                    selection: 'under2.5', 
+                    odds: match.overUnder25?.under || 1.95, 
+                    matchInfo: `${match.homeTeam} vs ${match.awayTeam}`, 
+                    league: match.league,
+                    sport: match.sport,
+                    countryCode: match.countryCode,
+                    homeCountryCode: match.homeCountryCode,
+                    awayCountryCode: match.awayCountryCode,
+                    homeLogo: match.homeLogo,
+                    awayLogo: match.awayLogo
+                  })}
+                  className={`flex justify-between items-center bg-brand-900 hover:bg-brand-700 px-4 py-2.5 rounded-xl border border-brand-700 transition-all hover:border-brand-accent active:scale-95 group/btn ${isSelectionLocked('under2.5') ? 'opacity-30 cursor-not-allowed' : ''}`}
+                >
+                  <span className="text-[10px] text-slate-500 font-bold uppercase group-hover/btn:text-brand-accent transition-colors">Moins (2.5)</span>
+                  <span className="text-sm font-black text-white">{match.overUnder25.under.toFixed(2)}</span>
+                </button>
+            </div>
+          )}
 
           {match.doubleChance && (
             <div className="flex justify-center mt-1">
@@ -275,7 +285,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, onAddToSlip, onOpenDetails
                       sport: match.sport,
                       countryCode: match.countryCode,
                       homeCountryCode: match.homeCountryCode,
-                      awayCountryCode: match.awayCountryCode
+                      awayCountryCode: match.awayCountryCode,
+                      homeLogo: match.homeLogo,
+                      awayLogo: match.awayLogo
                     })}
                     className={`flex flex-col items-center bg-brand-900 hover:bg-brand-700 py-1.5 rounded-xl border border-brand-700 transition-all hover:border-brand-accent active:scale-95 group/btn ${opt.v === 0 || isSelectionLocked(opt.s) ? 'opacity-30 cursor-not-allowed' : ''}`}
                   >

@@ -30,8 +30,18 @@
     <!-- Script Officiel CinetPay -->
     <script src="https://cdn.cinetpay.com/seamless/main.js"></script>
   </head>
-  <body class="bg-brand-900 text-slate-200 antialiased selection:bg-brand-accent selection:text-brand-900 pb-20 md:pb-0">
-    <div id="root"></div>
+  <body class="bg-brand-900 text-slate-200 antialiased selection:bg-brand-accent selection:text-brand-900">
+    <div id="root">
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #0a0e17; color: white; font-family: 'Inter', sans-serif;">
+        <h1 style="font-size: 2rem; font-weight: 900; font-style: italic; margin-bottom: 10px;"><span style="color: #00d062;">bot</span></h1>
+        <style>
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+          }
+        </style>
+      </div>
+    </div>
   <script type="module" src="./index.tsx"></script>
 </body>
 </html>

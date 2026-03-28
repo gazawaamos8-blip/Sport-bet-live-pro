@@ -104,7 +104,7 @@ const MatchList: React.FC<MatchListProps> = ({ onAddToSlip, onWatch, onOpenDetai
                     <button
                         key={s.id}
                         onClick={() => { setSelectedSport(s.id as any); setVisibleCount(BATCH_SIZE); }}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shadow-sm ${
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all whitespace-nowrap shadow-sm ${
                         selectedSport === s.id
                             ? 'bg-white text-brand-900 shadow-white/20'
                             : 'bg-brand-800 text-slate-400 border border-brand-700'
@@ -137,9 +137,12 @@ const MatchList: React.FC<MatchListProps> = ({ onAddToSlip, onWatch, onOpenDetai
 
       {/* Results Header */}
       {!showFavoritesOnly && (
-          <div className="px-3 flex justify-between items-center text-xs">
-              <span className="text-slate-400 font-bold">{filteredMatches.length} Matchs Direct/À Venir</span>
-              {searchQuery && <span className="text-brand-accent flex items-center gap-1"><Search size={10} /> Résultats pour "{searchQuery}"</span>}
+          <div className="px-3 flex justify-between items-center">
+              <div className="flex items-center gap-2.5 bg-brand-accent/20 px-4 py-2 rounded-full border-2 border-brand-accent/40 shadow-[0_0_15px_rgba(0,255,157,0.15)]">
+                <div className="w-2 h-2 rounded-full bg-brand-accent animate-pulse shadow-[0_0_8px_#00ff9d]"></div>
+                <span className="text-[12px] text-brand-accent font-black uppercase tracking-[0.15em]">{filteredMatches.length} Matchs Direct/À Venir</span>
+              </div>
+              {searchQuery && <span className="text-brand-accent flex items-center gap-1 text-[10px] font-bold"><Search size={10} /> Résultats pour "{searchQuery}"</span>}
           </div>
       )}
 

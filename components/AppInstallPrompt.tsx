@@ -26,9 +26,14 @@ const AppInstallPrompt: React.FC = () => {
             db.updateBalance(bonusAmount, 'add');
             user.hasDownloadedApp = true;
             db.saveUser(user);
-            alert(`Félicitations ! Vous avez reçu ${bonusAmount} CFA pour le téléchargement de l'application SportBot !`);
+            
+            db.addNotification({
+                title: 'Bonus App Installé',
+                text: `Félicitations ! Vous avez reçu ${bonusAmount} CFA pour le téléchargement de l'application SportBot !`,
+                type: 'wallet'
+            });
         }
-        window.open('https://ais-dev-fuuqsfldi6ecrfv657ceum-48676101579.europe-west2.run.app/sportbet.apk', '_blank');
+        window.open(`${window.location.origin}/sportbot.apk`, '_blank');
         handleDismiss();
     };
 
@@ -45,10 +50,10 @@ const AppInstallPrompt: React.FC = () => {
                 </button>
 
                 <div className="h-32 bg-gradient-to-br from-brand-800 to-brand-900 relative">
-                    <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/sportbet/400/200')] opacity-20 bg-cover bg-center mix-blend-overlay"></div>
+                    <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/sportbot/400/200')] opacity-20 bg-cover bg-center mix-blend-overlay"></div>
                     <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
                         <div className="w-24 h-24 bg-brand-800 rounded-2xl border-4 border-brand-900 shadow-xl flex items-center justify-center p-2 overflow-hidden">
-                            <img src="https://raw.githubusercontent.com/gazawaamos8-blip/Icon-sport-bet-pro/refs/heads/main/sportbet-icon%20(1).png" alt="SportBot Pro" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                            <img src="https://raw.githubusercontent.com/gazawaamos8-blip/Mon-icon-/refs/heads/main/sportbot-icon.png" alt="sportbot Pro" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
                         </div>
                     </div>
                 </div>

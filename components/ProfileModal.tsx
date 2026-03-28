@@ -1,7 +1,9 @@
 import React from 'react';
 import { User, AppSection } from '../types';
-import { X, User as UserIcon, Phone, ShieldCheck, LogOut, ChevronRight, CreditCard, Settings, HelpCircle, Copy, Clock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, User as UserIcon, Phone, ShieldCheck, LogOut, ChevronRight, CreditCard, Settings, HelpCircle, Copy, Clock, Download, PartyPopper, Trophy, Users, BarChart2, AlertTriangle } from 'lucide-react';
 import { db } from '../services/database';
+import { ApkDownload } from './ApkDownload';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -17,6 +19,7 @@ interface ProfileModalProps {
 const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onLogout, onOpenWallet, onOpenSettings, onOpenSupport, onNavigate }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [newName, setNewName] = React.useState(user.name);
+  const [showApkDownload, setShowApkDownload] = React.useState(false);
 
   if (!isOpen) return null;
 
@@ -128,6 +131,72 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onLo
                </button>
            )}
 
+           {/* Pro Features Section */}
+           <div className="py-2">
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Espace PRO & Récompenses</p>
+              <div className="grid grid-cols-1 gap-2">
+                <button 
+                    onClick={() => handleNavigate(AppSection.PROMOTIONS)}
+                    className="w-full p-3 bg-brand-800/50 rounded-xl flex items-center gap-3 border border-brand-800 hover:bg-brand-800 hover:border-brand-700 transition-all text-left group"
+                >
+                    <div className="p-2 bg-brand-900 rounded-lg text-yellow-500 group-hover:text-white"><PartyPopper size={18} /></div>
+                    <div className="flex-1">
+                        <p className="text-sm font-bold text-white">Promotions</p>
+                        <p className="text-xs text-slate-500">Bonus, Freebets & Boutique</p>
+                    </div>
+                    <ChevronRight size={16} className="text-slate-600" />
+                </button>
+
+                <button 
+                    onClick={() => handleNavigate(AppSection.VIP_CLUB)}
+                    className="w-full p-3 bg-brand-800/50 rounded-xl flex items-center gap-3 border border-brand-800 hover:bg-brand-800 hover:border-brand-700 transition-all text-left group"
+                >
+                    <div className="p-2 bg-brand-900 rounded-lg text-brand-highlight group-hover:text-white"><Trophy size={18} /></div>
+                    <div className="flex-1">
+                        <p className="text-sm font-bold text-white">Club VIP</p>
+                        <p className="text-xs text-slate-500">Avantages exclusifs & Statut</p>
+                    </div>
+                    <ChevronRight size={16} className="text-slate-600" />
+                </button>
+
+                <button 
+                    onClick={() => handleNavigate(AppSection.LEADERBOARD)}
+                    className="w-full p-3 bg-brand-800/50 rounded-xl flex items-center gap-3 border border-brand-800 hover:bg-brand-800 hover:border-brand-700 transition-all text-left group"
+                >
+                    <div className="p-2 bg-brand-900 rounded-lg text-cyan-400 group-hover:text-white"><Users size={18} /></div>
+                    <div className="flex-1">
+                        <p className="text-sm font-bold text-white">Classement PRO</p>
+                        <p className="text-xs text-slate-500">Défiez les meilleurs parieurs</p>
+                    </div>
+                    <ChevronRight size={16} className="text-slate-600" />
+                </button>
+
+                <button 
+                    onClick={() => handleNavigate(AppSection.STATISTICS)}
+                    className="w-full p-3 bg-brand-800/50 rounded-xl flex items-center gap-3 border border-brand-800 hover:bg-brand-800 hover:border-brand-700 transition-all text-left group"
+                >
+                    <div className="p-2 bg-brand-900 rounded-lg text-blue-400 group-hover:text-white"><BarChart2 size={18} /></div>
+                    <div className="flex-1">
+                        <p className="text-sm font-bold text-white">Statistiques</p>
+                        <p className="text-xs text-slate-500">Analyses & Tendances IA</p>
+                    </div>
+                    <ChevronRight size={16} className="text-slate-600" />
+                </button>
+
+                <button 
+                    onClick={() => handleNavigate(AppSection.RESPONSIBLE_GAMING)}
+                    className="w-full p-3 bg-brand-800/50 rounded-xl flex items-center gap-3 border border-brand-800 hover:bg-brand-800 hover:border-brand-700 transition-all text-left group"
+                >
+                    <div className="p-2 bg-brand-900 rounded-lg text-red-400 group-hover:text-white"><AlertTriangle size={18} /></div>
+                    <div className="flex-1">
+                        <p className="text-sm font-bold text-white">Jeu Responsable PRO</p>
+                        <p className="text-xs text-slate-500">Limites, Auto-exclusion & Aide</p>
+                    </div>
+                    <ChevronRight size={16} className="text-slate-600" />
+                </button>
+              </div>
+           </div>
+
            <div className="p-3 bg-brand-800/50 rounded-xl flex items-center gap-3 border border-brand-800 cursor-pointer hover:bg-brand-800 hover:border-brand-700 transition-all">
               <div className="p-2 bg-brand-900 rounded-lg text-slate-400"><Phone size={18} /></div>
               <div className="flex-1">
@@ -176,13 +245,25 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onLo
 
         {/* Footer */}
         <div className="p-4 border-t border-brand-800">
-           <button onClick={onLogout} className="w-full py-3 rounded-xl bg-red-500/10 text-red-500 font-bold flex items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-all">
-              <LogOut size={18} /> Déconnexion
-           </button>
-           <p className="text-center text-[10px] text-slate-600 mt-3 font-mono">Version 2.5.0 (Build 2026)</p>
+            <button 
+               onClick={() => setShowApkDownload(true)}
+               className="w-full py-3 mb-3 rounded-xl bg-brand-accent/10 text-brand-accent font-bold flex items-center justify-center gap-2 hover:bg-brand-accent/20 transition-all border border-brand-accent/20"
+            >
+               <Download size={18} /> Télécharger l'APK
+            </button>
+            <button onClick={onLogout} className="w-full py-3 rounded-xl bg-red-500/10 text-red-500 font-bold flex items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-all">
+               <LogOut size={18} /> Déconnexion
+            </button>
+            <p className="text-center text-[10px] text-slate-600 mt-3 font-mono">Version 2.5.0 (Build 2026)</p>
         </div>
 
       </div>
+      
+      <AnimatePresence>
+        {showApkDownload && (
+          <ApkDownload onClose={() => setShowApkDownload(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

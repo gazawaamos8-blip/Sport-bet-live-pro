@@ -20,7 +20,7 @@ const Referral: React.FC = () => {
     if (navigator.share) {
         try {
             await navigator.share({
-                title: 'Rejoins-moi sur SportBet Pro !',
+                title: 'Rejoins-moi sur sportbot Pro !',
                 text: `Utilise mon code promo ${referralCode} pour recevoir 200% de bonus sur ton premier dépôt !`,
                 url: window.location.href,
             });
@@ -48,11 +48,14 @@ const Referral: React.FC = () => {
       <div className="bg-brand-800 p-6 border-b border-brand-700 shadow-xl">
          <div className="flex justify-between items-start">
             <div>
-               <h2 className="text-2xl font-black text-white italic uppercase mb-1">Affiliation <span className="text-brand-accent">VIP</span></h2>
-               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Programme Partenaire 2026</p>
+               <h2 className="text-2xl font-black text-white italic uppercase mb-1">Affiliation <span className="text-brand-accent">PRO</span></h2>
+               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Programme Partenaire Elite 2026</p>
             </div>
-            <div className="bg-brand-accent text-brand-900 text-xs font-black px-3 py-1 rounded-full animate-pulse shadow-[0_0_10px_#00d062]">
-               Niveau: GOLD
+            <div className="flex flex-col items-end gap-1">
+               <div className="bg-brand-accent text-brand-900 text-[10px] font-black px-3 py-1 rounded-full animate-pulse shadow-[0_0_15px_#00d062] uppercase tracking-tighter">
+                  Niveau: PLATINUM ELITE
+               </div>
+               <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Commission: 35%</span>
             </div>
          </div>
       </div>
@@ -109,7 +112,7 @@ const Referral: React.FC = () => {
                             <Share2 size={16} /> Partager
                         </button>
                         <button 
-                            onClick={() => window.open(`https://wa.me/?text=Rejoins-moi sur SportBet Pro ! Utilise mon code promo ${referralCode} pour recevoir 200% de bonus !`, '_blank')}
+                            onClick={() => window.open(`https://wa.me/?text=Rejoins-moi sur sportbot Pro ! Utilise mon code promo ${referralCode} pour recevoir 200% de bonus !`, '_blank')}
                             className="bg-[#128C7E] hover:bg-[#075E54] text-white py-3 rounded-xl font-black flex items-center justify-center gap-2 text-[10px] uppercase shadow-lg transition-all active:scale-95"
                         >
                             <Smartphone size={16} /> WhatsApp
@@ -151,16 +154,40 @@ const Referral: React.FC = () => {
 
                  {/* Stats */}
                  <div className="grid grid-cols-2 gap-3">
-                     <div className="bg-brand-800 p-4 rounded-2xl border border-brand-700 shadow-lg">
-                        <div className="flex items-center gap-2 text-slate-500 text-[10px] font-black uppercase mb-2 tracking-widest"><Users size={14} /> Filleuls</div>
+                     <div className="bg-brand-800 p-4 rounded-2xl border border-brand-700 shadow-lg relative overflow-hidden group">
+                        <div className="absolute -right-2 -top-2 opacity-5 group-hover:scale-110 transition-transform"><Users size={40} /></div>
+                        <div className="flex items-center gap-2 text-slate-500 text-[10px] font-black uppercase mb-2 tracking-widest"><Users size={14} /> Filleuls Actifs</div>
                         <div className="text-2xl font-black text-white">1,240</div>
-                        <div className="text-[9px] text-green-500 font-bold mt-1">+12 ce mois</div>
+                        <div className="text-[9px] text-green-500 font-bold mt-1 flex items-center gap-1"><TrendingUp size={10} /> +12% ce mois</div>
                      </div>
-                     <div className="bg-brand-800 p-4 rounded-2xl border border-brand-700 shadow-lg">
-                        <div className="flex items-center gap-2 text-slate-500 text-[10px] font-black uppercase mb-2 tracking-widest"><TrendingUp size={14} /> Taux Conv.</div>
-                        <div className="text-2xl font-black text-green-400">12.5%</div>
-                        <div className="text-[9px] text-slate-500 font-bold mt-1">Moyenne: 8%</div>
+                     <div className="bg-brand-800 p-4 rounded-2xl border border-brand-700 shadow-lg relative overflow-hidden group">
+                        <div className="absolute -right-2 -top-2 opacity-5 group-hover:scale-110 transition-transform"><Zap size={40} /></div>
+                        <div className="flex items-center gap-2 text-slate-500 text-[10px] font-black uppercase mb-2 tracking-widest"><TrendingUp size={14} /> Taux Conv. Pro</div>
+                        <div className="text-2xl font-black text-brand-accent">12.5%</div>
+                        <div className="text-[9px] text-slate-500 font-bold mt-1">Moyenne Elite: 8%</div>
                      </div>
+                 </div>
+
+                 {/* Pro Benefits Section */}
+                 <div className="bg-brand-900/50 border border-brand-700 rounded-2xl p-5 space-y-4">
+                    <h4 className="text-white font-black uppercase text-[10px] italic tracking-widest flex items-center gap-2">
+                        <Award size={14} className="text-brand-accent" /> Avantages Partenaire Pro
+                    </h4>
+                    <div className="grid grid-cols-1 gap-2">
+                        {[
+                            "Paiements hebdomadaires garantis",
+                            "Gestionnaire de compte dédié 24/7",
+                            "Matériel marketing personnalisé",
+                            "Accès aux statistiques en temps réel"
+                        ].map((benefit, i) => (
+                            <div key={i} className="flex items-center gap-3 bg-brand-800/40 p-3 rounded-xl border border-brand-700/50">
+                                <div className="w-5 h-5 bg-brand-accent/20 rounded-full flex items-center justify-center">
+                                    <Check size={12} className="text-brand-accent" />
+                                </div>
+                                <span className="text-[10px] text-slate-300 font-bold uppercase">{benefit}</span>
+                            </div>
+                        ))}
+                    </div>
                  </div>
             </div>
         )}

@@ -4,6 +4,7 @@ export type SportType = 'football' | 'basketball' | 'tennis' | 'rugby';
 export interface User {
   phone: string;
   name: string;
+  email?: string;
   balance: number;
   isBiometricEnabled: boolean;
   notifications?: {
@@ -98,6 +99,18 @@ export interface Match {
     homeAway: number;
     drawAway: number;
   };
+  overUnder25?: {
+    over: number;
+    under: number;
+  };
+  extraOdds?: {
+    'injuriesOver1.5'?: number;
+    'injuriesUnder1.5'?: number;
+    'cardsOver3.5'?: number;
+    'cardsUnder3.5'?: number;
+    'yellowCardsOver2.5'?: number;
+    'redCardYes'?: number;
+  };
   aiProbabilities?: {
     home: number;
     draw: number;
@@ -132,7 +145,7 @@ export interface CasinoGame {
 
 export interface BetSlipItem {
   matchId: string;
-  selection: 'home' | 'draw' | 'away' | 'homeDraw' | 'homeAway' | 'drawAway';
+  selection: 'home' | 'draw' | 'away' | 'homeDraw' | 'homeAway' | 'drawAway' | 'over2.5' | 'under2.5' | 'injuriesOver1.5' | 'injuriesUnder1.5' | 'cardsOver3.5' | 'cardsUnder3.5' | 'yellowCardsOver2.5' | 'redCardYes';
   odds: number;
   matchInfo: string;
   league?: string;
@@ -140,6 +153,8 @@ export interface BetSlipItem {
   countryCode?: string;
   homeCountryCode?: string;
   awayCountryCode?: string;
+  homeLogo?: string;
+  awayLogo?: string;
 }
 
 export interface PlacedBet {

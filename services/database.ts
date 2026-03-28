@@ -176,7 +176,12 @@ class Database {
               status: 'success',
               provider: 'BONUS PREMIER DEPOT (100%)'
             });
-            alert(`Félicitations ! Vous avez reçu un bonus de premier dépôt de ${bonusAmount.toLocaleString()} F (100%) !`);
+            
+            this.addNotification({
+                title: 'Bonus de Premier Dépôt',
+                text: `Félicitations ! Vous avez reçu un bonus de premier dépôt de ${bonusAmount.toLocaleString()} F (100%) !`,
+                type: 'wallet'
+            });
           }, 1000);
         }
         this.updateBalance(tx.amount, 'add');
@@ -358,6 +363,35 @@ class Database {
     const notifs = [newNotif, ...this.getNotifications()];
     localStorage.setItem(DB_KEYS.NOTIFICATIONS, JSON.stringify(notifs));
     this.notifyNotificationsChange();
+  }
+
+  // --- PREFERENCES ---
+  saveUserPreference(key: string, value: any) {
+    try {
+      const settings = this.getSettings();
+      settings[key] = value;
+      localStorage.setItem(DB_KEYS.SETTINGS, JSON.stringify(settings));
+    } catch (e) {
+      console.error("Failed to save preference:", e);
+    }
+  }
+
+  getUserPreference(key: string): any {
+    try {
+      const settings = this.getSettings();
+      return settings[key];
+    } catch (e) {
+      return null;
+    }
+  }
+
+  private getSettings(): Record<string, any> {
+    try {
+      const data = localStorage.getItem(DB_KEYS.SETTINGS);
+      return data ? JSON.parse(data) : {};
+    } catch (e) {
+      return {};
+    }
   }
 
   logout() {

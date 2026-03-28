@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart2, Activity, TrendingUp, Users, Trophy, Target } from 'lucide-react';
+import { BarChart2, Activity, TrendingUp, Users, Trophy, Target, Zap } from 'lucide-react';
 
 const StatisticsView: React.FC = () => {
   return (
@@ -9,8 +9,18 @@ const StatisticsView: React.FC = () => {
           <BarChart2 className="text-cyan-400" size={24} />
         </div>
         <div>
-          <h2 className="text-xl font-black text-white italic uppercase">Statistiques Pro</h2>
-          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Analyse de Performance</p>
+          <h2 className="text-xl font-black text-white italic uppercase">Statistiques <span className="text-brand-accent">PRO</span></h2>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Analyse de Performance Algorithmique</p>
+        </div>
+      </div>
+
+      {/* Pro AI Insights */}
+      <div className="bg-brand-accent/10 border border-brand-accent/30 p-4 rounded-2xl flex gap-4 items-center shadow-lg relative overflow-hidden">
+        <div className="absolute -right-2 -top-2 opacity-10 rotate-12"><Zap size={40} className="text-brand-accent" /></div>
+        <div className="bg-brand-accent/20 p-3 rounded-xl text-brand-accent"><Activity size={24} /></div>
+        <div>
+            <p className="text-[10px] text-brand-accent font-black uppercase tracking-widest mb-1">Insight IA du Jour</p>
+            <p className="text-xs text-white font-bold leading-tight">Tendance forte sur les victoires à domicile en Bundesliga (72% de réussite sur les 10 derniers matchs).</p>
         </div>
       </div>
 
